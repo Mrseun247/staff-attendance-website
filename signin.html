@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0F1C3F"/>
+<title>Staff Sign-In — StaffTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+
+<style>
+:root {
+  --navy:      #0F1C3F;
+  --navy2:     #162547;
+  --gold:      #F5A623;
+  --gold2:     #FDB944;
+  --white:     #FFFFFF;
+  --off:       #F7F8FC;
+  --green:     #16A34A;
+  --green-bg:  #DCFCE7;
+  --red:       #DC2626;
+  --red-bg:    #FEE2E2;
+  --amber:     #D97706;
+  --amber-bg:  #FEF3C7;
+  --gray:      #6B7280;
+  --border:    #E5E7EB;
+  --text:      #111827;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  overflow: hidden;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; width: 100%; height: 100vh; position: absolute; inset: 0; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ══════════════════════════
+   SCREEN 1 — IDLE / READY
+══════════════════════════ */
+#screen-idle {
+  background: linear-gradient(160deg, #0F1C3F 0%, #1a3060 60%, #0d1830 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* decorative circles */
+#screen-idle::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,166,35,0.07) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(245,166,35,0.08);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation: expandRing 4s ease-out infinite;
+}
+.ring:nth-child(1) { width: 220px; height: 220px; animation-delay: 0s; }
+.ring:nth-child(2) { width: 360px; height: 360px; animation-delay: 1s; }
+.ring:nth-child(3) { width: 500px; height: 500px; animation-delay: 2s; }
+@keyframes expandRing {
+  0%   { opacity: 0.4; transform: translate(-50%,-50%) scale(0.9); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(1.1); }
+}
+
+.idle-school {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.idle-qr-icon {
+  width: 100px; height: 100px;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(245,166,35,0.3);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  margin: 0 auto 28px;
+  position: relative;
+  animation: iconFloat 3s ease-in-out infinite;
+}
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.idle-title {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+  line-height: 1.1;
+}
+.idle-title span { color: var(--gold); }
+
+.idle-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 0 auto 40px;
+}
+
+.idle-clock {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--white);
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.idle-date {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 40px;
+  font-weight: 500;
+}
+
+.btn-scan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  border-radius: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 18px 48px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 24px rgba(245,166,35,0.35);
+  position: relative;
+}
+.btn-scan:active { transform: scale(0.97); }
+.btn-scan:hover  { background: var(--gold2); }
+
+.security-notice {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255,255,255,0.3);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════
+   SCREEN 2 — SCANNER
+══════════════════════════ */
+#screen-scan {
+  background: #000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 32px;
+}
+
+.scan-topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 10;
+}
+.scan-topbar-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+}
+.btn-close-scan {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: var(--white);
+  font-size: 18px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+#scanVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+#scanCanvas { display: none; }
+
+/* viewfinder */
+.viewfinder {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 240px; height: 240px;
+  pointer-events: none;
+}
+.vf-corner {
+  position: absolute;
+  width: 40px; height: 40px;
+  border-color: var(--gold);
+  border-style: solid;
+}
+.vf-corner.tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.vf-corner.tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.vf-corner.bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.vf-corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+.vf-line {
+  position: absolute;
+  left: 4px; right: 4px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  box-shadow: 0 0 10px var(--gold);
+  top: 4px;
+  animation: vfScan 2.5s ease-in-out infinite;
+}
+@keyframes vfScan {
+  0%   { top: 4px; opacity: 0.2; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: calc(100% - 6px); opacity: 0.2; }
+}
+
+.scan-hint {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 24px;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.scan-bottom {
+  position: absolute;
+  bottom: 28px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10;
+}
+.btn-alt {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 24px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+.btn-alt:active { opacity: 0.7; }
+
+/* ══════════════════════════
+   SCREEN 3 — CONFIRM
+══════════════════════════ */
+#screen-confirm {
+  background: var(--off);
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.confirm-card {
+  background: var(--white);
+  border-radius: 24px;
+  box-shadow: 0 8px 40px rgba(15,28,63,0.12);
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.confirm-avatar {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--navy) 0%, #2a4a8a 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 20px;
+  box-shadow: 0 4px 16px rgba(15,28,63,0.2);
+}
+
+.confirm-name {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+.confirm-role {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 4px;
+}
+.confirm-id {
+  display: inline-block;
+  background: #EFF6FF;
+  color: #1e40af;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 24px;
+}
+
+.confirm-action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 16px;
+  padding: 12px 24px;
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.confirm-action-badge.in {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.confirm-action-badge.out {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.confirm-time-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.confirm-time-item {
+  text-align: center;
+}
+.confirm-time-item .val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.confirm-time-item .lbl {
+  font-size: 11px;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
+.confirm-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 0 24px;
+}
+
+/* security PIN input */
+.pin-section { margin-bottom: 24px; }
+.pin-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray);
+  margin-bottom: 12px;
+}
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.pin-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  transition: all 0.15s;
+}
+.pin-dot.filled {
+  background: var(--navy);
+  border-color: var(--navy);
+  transform: scale(1.1);
+}
+.pin-dot.error {
+  background: var(--red);
+  border-color: var(--red);
+  animation: shake 0.4s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 280px;
+  margin: 0 auto;
+}
+.numpad-btn {
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  height: 56px;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.numpad-btn:active { background: var(--border); transform: scale(0.95); }
+.numpad-btn.del { font-size: 16px; color: var(--gray); }
+.numpad-btn.confirm-ok {
+  background: var(--navy);
+  color: var(--white);
+  border-color: var(--navy);
+  font-size: 15px;
+}
+.numpad-btn.confirm-ok:active { background: #162547; }
+.numpad-btn.cancel {
+  color: var(--red);
+  font-size: 14px;
+}
+
+.confirm-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.btn-full {
+  flex: 1;
+  padding: 15px;
+  border-radius: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.btn-full:active { transform: scale(0.97); }
+.btn-confirm { background: var(--navy); color: var(--white); }
+.btn-cancel  { background: var(--off); color: var(--gray); border: 1.5px solid var(--border); }
+
+/* ══════════════════════════
+   SCREEN 4 — SUCCESS / LOCKED
+══════════════════════════ */
+#screen-success {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+#screen-success.type-in  { background: linear-gradient(160deg, #064E3B 0%, #065F46 100%); }
+#screen-success.type-out { background: linear-gradient(160deg, #78350F 0%, #92400E 100%); }
+#screen-success.type-locked { background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 100%); }
+#screen-success.type-error  { background: linear-gradient(160deg, #7F1D1D 0%, #991B1B 100%); }
+
+.success-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+@keyframes popIn {
+  0%   { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.success-title {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.success-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 0 auto 32px;
+}
+
+.success-detail-card {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 20px 28px;
+  margin-bottom: 32px;
+  display: inline-block;
+  min-width: 260px;
+}
+.success-detail-card .name {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.success-detail-card .meta {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 12px;
+}
+.success-detail-card .time-badge {
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-bar-wrap {
+  width: 100%;
+  max-width: 300px;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+  overflow: hidden;
+}
+.countdown-bar {
+  height: 100%;
+  background: rgba(255,255,255,0.5);
+  border-radius: 2px;
+  width: 100%;
+  animation: drainBar var(--drain-duration, 5s) linear forwards;
+}
+@keyframes drainBar {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+.countdown-txt {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 24px;
+}
+
+.btn-done {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 36px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+.btn-done:active { opacity: 0.8; }
+
+/* ══════════════════════════
+   SCREEN 5 — BLOCKED
+══════════════════════════ */
+#screen-blocked {
+  background: linear-gradient(160deg, #1e1e2e 0%, #2d1b4e 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.blocked-icon { font-size: 64px; margin-bottom: 20px; animation: popIn 0.4s both; }
+.blocked-title { font-size: 26px; font-weight: 900; margin-bottom: 10px; color: var(--white); }
+.blocked-msg   { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.7; max-width: 300px; margin: 0 auto 28px; }
+
+.blocked-info-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 20px 24px;
+  text-align: left;
+  max-width: 340px;
+  width: 100%;
+  margin: 0 auto 32px;
+}
+.blocked-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 13px;
+}
+.blocked-row:last-child { border-bottom: none; }
+.blocked-row .lbl { color: rgba(255,255,255,0.45); }
+.blocked-row .val { font-weight: 700; color: var(--white); }
+.blocked-row .val.green { color: #4ade80; }
+.blocked-row .val.amber { color: var(--gold); }
+
+.btn-blocked-ok {
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 40px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+/* locked device overlay */
+.device-locked-banner {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(220,38,38,0.95);
+  backdrop-filter: blur(8px);
+  color: var(--white);
+  text-align: center;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 9999;
+  display: none;
+}
+.device-locked-banner.show { display: block; }
+
+/* PIN setup overlay */
+.pin-setup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.pin-setup-overlay.open { display: flex; }
+.pin-setup-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  color: var(--text);
+}
+.pin-setup-card h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.pin-setup-card p {
+  font-size: 13px;
+  color: var(--gray);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     DEVICE LOCKED BANNER
+══════════════════════════════════════════ -->
+<div class="device-locked-banner" id="deviceLockedBanner">
+  🔒 This device is locked until midnight. One sign-in per device per shift.
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1: IDLE
+══════════════════════════════════════════ -->
+<div class="screen active" id="screen-idle">
+  <div class="ring"></div>
+  <div class="ring"></div>
+  <div class="ring"></div>
+
+  <div class="idle-school" id="idleSchoolName">Victory Montessori Int'l School</div>
+
+  <div class="idle-qr-icon">🔳</div>
+
+  <div class="idle-clock" id="idleClock">00:00</div>
+  <div class="idle-date" id="idleDate">Thursday, 1 January 2026</div>
+
+  <div class="idle-title">Staff <span>Sign-In</span><br/>Portal</div>
+  <div class="idle-sub">Hold your QR card up to the camera to record your attendance.</div>
+
+  <button class="btn-scan" onclick="openScanner()">
+    <span style="font-size:20px">📷</span> Tap to Scan QR Code
+  </button>
+
+  <div class="security-notice">🔒 Secured · One sign-in per device per session</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2: QR SCANNER
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-scan">
+  <video id="scanVideo" autoplay muted playsinline></video>
+  <canvas id="scanCanvas"></canvas>
+
+  <div class="scan-topbar">
+    <div class="scan-topbar-title">Scan Your QR Card</div>
+    <button class="btn-close-scan" onclick="closeScanner()">✕</button>
+  </div>
+
+  <div class="viewfinder">
+    <div class="vf-corner tl"></div>
+    <div class="vf-corner tr"></div>
+    <div class="vf-corner bl"></div>
+    <div class="vf-corner br"></div>
+    <div class="vf-line"></div>
+  </div>
+
+  <div class="scan-hint" id="scanHint">📋 Hold QR card steady inside the frame</div>
+
+  <div class="scan-bottom">
+    <button class="btn-alt" onclick="manualEntry()">⌨️ Enter ID Manually</button>
+    <button class="btn-alt" onclick="closeScanner()">✕ Cancel</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3: CONFIRM + PIN
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-confirm">
+  <div class="confirm-card" id="confirmCard">
+    <div class="confirm-avatar" id="confirmAvatar">👤</div>
+    <div class="confirm-name" id="confirmName">—</div>
+    <div class="confirm-role" id="confirmRole">—</div>
+    <div class="confirm-id"   id="confirmId">ID: —</div>
+
+    <div class="confirm-action-badge in" id="confirmBadge">
+      <span id="confirmBadgeIcon">✅</span>
+      <span id="confirmBadgeText">MORNING SIGN-IN</span>
+    </div>
+
+    <div class="confirm-time-row" style="margin-top:10px">
+      <div class="confirm-time-item">
+        <div class="val" id="confirmTime">—</div>
+        <div class="lbl">Time</div>
+      </div>
+      <div class="confirm-time-item">
+        <div class="val" id="confirmDate">—</div>
+        <div class="lbl">Date</div>
+      </div>
+      <div class="confirm-time-item">
+        <div class="val" id="confirmDay">—</div>
+        <div class="lbl">Day</div>
+      </div>
+    </div>
+
+    <div class="confirm-divider"></div>
+
+    <!-- PIN step -->
+    <div class="pin-section" id="pinSection">
+      <div class="pin-label">Enter your 4-digit PIN to confirm</div>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="numpad">
+        <button class="numpad-btn" onclick="pinKey('1')">1</button>
+        <button class="numpad-btn" onclick="pinKey('2')">2</button>
+        <button class="numpad-btn" onclick="pinKey('3')">3</button>
+        <button class="numpad-btn" onclick="pinKey('4')">4</button>
+        <button class="numpad-btn" onclick="pinKey('5')">5</button>
+        <button class="numpad-btn" onclick="pinKey('6')">6</button>
+        <button class="numpad-btn" onclick="pinKey('7')">7</button>
+        <button class="numpad-btn" onclick="pinKey('8')">8</button>
+        <button class="numpad-btn" onclick="pinKey('9')">9</button>
+        <button class="numpad-btn cancel" onclick="cancelConfirm()">✕</button>
+        <button class="numpad-btn" onclick="pinKey('0')">0</button>
+        <button class="numpad-btn del" onclick="pinDel()">⌫</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 4: SUCCESS
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-success">
+  <div class="success-icon" id="successIcon">✅</div>
+  <div class="success-title" id="successTitle">Signed In!</div>
+  <div class="success-sub" id="successSub">Your attendance has been recorded.</div>
+  <div class="success-detail-card">
+    <div class="name" id="successName">—</div>
+    <div class="meta" id="successMeta">—</div>
+    <div class="time-badge" id="successTime">—</div>
+  </div>
+  <div class="countdown-bar-wrap">
+    <div class="countdown-bar" id="countdownBar"></div>
+  </div>
+  <div class="countdown-txt" id="countdownTxt">Returning to home…</div>
+  <button class="btn-done" onclick="goIdle()">✓ Done</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 5: BLOCKED
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-blocked">
+  <div class="blocked-icon" id="blockedIcon">🚫</div>
+  <div class="blocked-title" id="blockedTitle">Already Signed In</div>
+  <div class="blocked-msg" id="blockedMsg">You have already recorded attendance for this session on this device.</div>
+
+  <div class="blocked-info-card" id="blockedInfoCard"></div>
+
+  <button class="btn-blocked-ok" onclick="goIdle()">← Back to Home</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PIN SETUP OVERLAY (first use)
+══════════════════════════════════════════ -->
+<div class="pin-setup-overlay" id="pinSetupOverlay">
+  <div class="pin-setup-card">
+    <h3>🔐 Set Your PIN</h3>
+    <p>Create a 4-digit PIN for <strong id="pinSetupName">your account</strong>. You'll enter this every time you sign in to prove it's really you.</p>
+    <div class="pin-dots" id="pinSetupDots">
+      <div class="pin-dot" id="spd0"></div>
+      <div class="pin-dot" id="spd1"></div>
+      <div class="pin-dot" id="spd2"></div>
+      <div class="pin-dot" id="spd3"></div>
+    </div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:16px" id="pinSetupHint">Enter 4 digits</div>
+    <div class="numpad" style="max-width:260px;margin:0 auto">
+      <button class="numpad-btn" onclick="setupKey('1')">1</button>
+      <button class="numpad-btn" onclick="setupKey('2')">2</button>
+      <button class="numpad-btn" onclick="setupKey('3')">3</button>
+      <button class="numpad-btn" onclick="setupKey('4')">4</button>
+      <button class="numpad-btn" onclick="setupKey('5')">5</button>
+      <button class="numpad-btn" onclick="setupKey('6')">6</button>
+      <button class="numpad-btn" onclick="setupKey('7')">7</button>
+      <button class="numpad-btn" onclick="setupKey('8')">8</button>
+      <button class="numpad-btn" onclick="setupKey('9')">9</button>
+      <button class="numpad-btn" style="font-size:13px;color:var(--gray)" onclick="cancelPinSetup()">Cancel</button>
+      <button class="numpad-btn" onclick="setupKey('0')">0</button>
+      <button class="numpad-btn del" onclick="setupDel()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<script src="stafftrack-signin.js"></script>
+
+</body>
+</html>
