@@ -58,7 +58,9 @@ function getQrPayload(staff) {
 // ═══════════════════════════════════════════
 let staffList    = JSON.parse(localStorage.getItem('vmis_staff')   || '[]');
 let logs         = JSON.parse(localStorage.getItem('vmis_logs')    || '[]');
-let scriptUrl    = localStorage.getItem('vmis_script_url')         || '';
+let scriptUrl    = localStorage.getItem('vmis_script_url')         || 'https://script.google.com/macros/s/AKfycbz2bGmhJq9XjYni5ondNxIPFBzGsquigfPz7e_fmiV9KdYEeT_bC2N59jMDJF8InQM2/exec';
+// Always persist so cloud sync works from first load
+if (!localStorage.getItem('vmis_script_url')) localStorage.setItem('vmis_script_url', scriptUrl);
 let schoolInfo   = JSON.parse(localStorage.getItem('vmis_school')  || '{"name":"","branch":"","session":"2025/2026"}');
 let attRules     = JSON.parse(localStorage.getItem('vmis_rules')   || '{"resumption":"07:30","closing":"15:00","late":15}');
 let cameraStream = null;
