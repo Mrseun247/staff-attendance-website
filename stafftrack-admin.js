@@ -210,14 +210,11 @@ function saveStaff() {
 }
 
 function renderStaffList() {
-  const wrap   = document.getElementById('staffListWrap');
-  const qrGrid = document.getElementById('qrGrid');
-  const qrCard = document.getElementById('qrPreviewCard');
+  const wrap = document.getElementById('staffListWrap');
   if (!wrap) return;
 
   if (staffList.length === 0) {
-    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><h3>No staff added yet</h3><p>Use the form above to add staff and generate QR codes.</p></div>';
-    if (qrCard) qrCard.style.display = 'none';
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><h3>No staff added yet</h3><p>Use the form above to add staff members.</p></div>';
     return;
   }
 
@@ -237,119 +234,61 @@ function renderStaffList() {
       return '<tr>' +
         '<td><span class="badge badge-navy">' + s.id + '</span></td>' +
         '<td><strong>' + s.name + '</strong></td>' +
-        '<td>' + s.dept + '</td>' +
-        '<td>' + s.role + '</td>' +
+        '<td>' + s.dept + '</td><td>' + s.role + '</td>' +
         '<td>' + (hasPIN ? '<span class="badge badge-green">✓ Set</span>' : '<span class="badge badge-gold">Not set</span>') + '</td>' +
         '<td>' + badge + '</td>' +
         '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
-          '<button class="btn btn-gold btn-sm" onclick="openQRModal(\'' + s.id + '\')">🔳 QR</button>' +
           (hasPIN ? '<button class="btn btn-ghost btn-sm" onclick="resetStaffPIN(\'' + s.id + '\',\'' + s.name.replace(/'/g,"\\'") + '\')">🔑 Reset PIN</button>' : '') +
-          '<button class="btn btn-ghost btn-sm" onclick="removeStaff(\'' + s.id + '\')">✕</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="removeStaff(\'' + s.id + '\')">✕ Remove</button>' +
         '</td>' +
       '</tr>';
     }).join('') +
     '</tbody></table>';
 
-  if (qrCard) qrCard.style.display = 'block';
-  if (qrGrid) {
-    qrGrid.innerHTML = '';
-    staffList.forEach((s, idx) => {
-      const card = document.createElement('div');
-      card.className = 'qr-card';
-      card.onclick = () => openQRModal(s.id);
-      const qrTarget = document.createElement('div');
-      qrTarget.style.cssText = 'width:100px;height:100px;margin:0 auto 8px';
-      const nameEl = document.createElement('div');
-      nameEl.className = 'qr-name'; nameEl.textContent = s.name;
-      const roleEl = document.createElement('div');
-      roleEl.className = 'qr-role'; roleEl.textContent = s.dept;
-      card.appendChild(qrTarget); card.appendChild(nameEl); card.appendChild(roleEl);
-      qrGrid.appendChild(card);
-      setTimeout(() => makeQR(qrTarget, getQrPayload(s), 100), 100 + idx * 80);
-    });
-  }
+  // Regenerate the school QR whenever staff list updates
+  generateSchoolQR();
 }
 
 // ═══════════════════════════════════════════
-// QR MODAL
+// SCHOOL QR CODE — one QR for all staff
+// Encodes just the portal URL so any device
+// opening it gets the staff picker.
 // ═══════════════════════════════════════════
-function openQRModal(id) {
-  const s = staffList.find(x => x.id === id);
-  if (!s) return;
-  modalStaff = s;
-  document.getElementById('modalTitle').textContent = s.name;
-  document.getElementById('modalSub').textContent = s.role + ' · ' + s.dept + ' · ID: ' + s.id;
-  const el = document.getElementById('modalQR');
+function generateSchoolQR() {
+  const el = document.getElementById('schoolQR');
+  const lbl = document.getElementById('schoolQRLabel');
+  if (!el) return;
+  const portalUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'staffportal.html' +
+    (scriptUrl ? '?api=' + encodeURIComponent(scriptUrl) : '');
   el.innerHTML = '';
-  document.getElementById('modalBg').classList.add('open');
-  setTimeout(() => makeQR(el, getQrPayload(s), 200), 100);
+  makeQR(el, portalUrl, 180);
+  if (lbl) lbl.textContent = schoolInfo.name || 'StaffTrack';
 }
 
-function closeModal(e) {
-  if (e.target.id === 'modalBg') document.getElementById('modalBg').classList.remove('open');
-}
-
-function printQR() {
-  const s = modalStaff;
-  if (!s) return;
+function printSchoolQR() {
+  const el = document.getElementById('schoolQR');
+  if (!el) return;
+  const canvas = el.querySelector('canvas');
+  const img    = el.querySelector('img');
+  const src    = canvas ? canvas.toDataURL() : (img ? img.src : '');
+  if (!src) { alert('QR not ready yet, please wait a moment.'); return; }
   const win = window.open('', '_blank');
-  if (!win) { alert('Allow pop-ups to print QR codes.'); return; }
-  const qrEl  = document.getElementById('modalQR');
-  const canvas = qrEl.querySelector('canvas');
-  const imgEl  = qrEl.querySelector('img');
-  const src    = canvas ? canvas.toDataURL() : (imgEl ? imgEl.src : '');
-  if (!src) { alert('QR not ready yet, please wait a moment and try again.'); return; }
+  if (!win) { alert('Allow pop-ups to print.'); return; }
   const doc = win.document;
   doc.open();
-  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + s.name + ' QR</title>' +
-    '<style>body{font-family:sans-serif;text-align:center;padding:40px}' +
-    '.school{font-size:13px;color:#999;margin-bottom:12px}' +
-    '.name{font-size:22px;font-weight:bold;margin-top:12px}' +
-    '.sub{font-size:14px;color:#666}.id{font-size:12px;color:#aaa;margin-top:4px}' +
-    'img{border:2px solid #0F1C3F;border-radius:8px;padding:8px}</style></head><body>');
-  doc.write('<div class="school">' + (schoolInfo.name || 'StaffTrack') + '</div>');
-  doc.write('<img src="' + src + '" width="220" height="220" alt="QR"/>');
-  doc.write('<div class="name">' + s.name + '</div>');
-  doc.write('<div class="sub">' + s.role + ' · ' + s.dept + '</div>');
-  doc.write('<div class="id">ID: ' + s.id + '</div>');
+  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>School QR Code</title>' +
+    '<style>body{font-family:sans-serif;text-align:center;padding:60px}' +
+    'h2{font-size:28px;font-weight:900;margin-bottom:6px}' +
+    '.sub{font-size:15px;color:#666;margin-bottom:24px}' +
+    'img{border:3px solid #0F1C3F;border-radius:12px;padding:12px}' +
+    '.inst{font-size:13px;color:#999;margin-top:20px;line-height:1.6}</style></head><body>');
+  doc.write('<h2>' + (schoolInfo.name || 'StaffTrack') + '</h2>');
+  doc.write('<div class="sub">Staff Attendance — Scan to Sign In / Out</div>');
+  doc.write('<img src="' + src + '" width="240" height="240" alt="School QR"/>');
+  doc.write('<div class="inst">1. Scan this QR code with your phone camera<br>2. Select your name from the list<br>3. Enter your PIN to confirm</div>');
   doc.write('</body></html>');
   doc.close();
   win.addEventListener('load', () => win.print());
-}
-
-function printAllQR() {
-  if (staffList.length === 0) { showToast('error','⚠️','No Staff','Add staff first.'); return; }
-  const win = window.open('', '_blank');
-  if (!win) { alert('Allow pop-ups to print QR codes.'); return; }
-  const cards = staffList.map(s => {
-    const div = document.createElement('div');
-    makeQR(div, getQrPayload(s), 150);
-    return { s, el: div };
-  });
-  setTimeout(() => {
-    const imgs = cards.map(c => {
-      const canvas = c.el.querySelector('canvas');
-      const img    = c.el.querySelector('img');
-      const src    = canvas ? canvas.toDataURL() : (img ? img.src : '');
-      return '<div class="card">' +
-        '<img src="' + src + '" width="150" height="150" alt="QR"/>' +
-        '<div class="name">' + c.s.name + '</div>' +
-        '<div class="sub">' + c.s.role + '</div>' +
-        '<div class="id">ID: ' + c.s.id + '</div></div>';
-    }).join('');
-    const doc = win.document;
-    doc.open();
-    doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>All QR Codes</title>' +
-      '<style>body{font-family:sans-serif;padding:20px}h1{text-align:center;margin-bottom:24px}' +
-      '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px}' +
-      '.card{text-align:center;border:1px solid #ddd;border-radius:8px;padding:16px;break-inside:avoid}' +
-      '.name{font-weight:bold;font-size:14px;margin-top:8px}.sub{font-size:12px;color:#666}' +
-      '.id{font-size:11px;color:#999}img{border-radius:4px}</style></head><body>');
-    doc.write('<h1>' + (schoolInfo.name || 'StaffTrack') + ' — Staff QR Codes</h1>');
-    doc.write('<div class="grid">' + imgs + '</div></body></html>');
-    doc.close();
-    win.addEventListener('load', () => win.print());
-  }, 700);
 }
 
 function copyGasScript() {
@@ -725,6 +664,7 @@ async function saveScriptUrl() {
   localStorage.setItem('vmis_script_url', scriptUrl);
   updateConnStatus();
   updateSigninLink();
+  generateSchoolQR();
   // Push all local data to cloud
   await postCloud('saveAll', {
     staff: staffList, logs, pins: freshPins(),
@@ -922,5 +862,6 @@ logs = freshLogs();
 renderStaffList();
 updateSigninLink();
 updateConnStatus();
+generateSchoolQR();
 // Pull cloud data on startup if URL is already saved
 refreshCloudAndRender();
