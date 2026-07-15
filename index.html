@@ -670,7 +670,7 @@
 <div id="page-setup" class="page active">
   <div class="setup-header">
     <h1>QR <span class="gold">Attendance</span> System</h1>
-    <p>Generate unique QR codes for each staff member. Each scan is instantly logged to your Google Sheet.</p>
+    <p>One shared QR code for all staff. Each staff member scans it, selects their name and enters their PIN. Every sign-in is logged to your Google Sheet.</p>
   </div>
   <div class="setup-body">
 
@@ -682,8 +682,25 @@
 
     <div class="notice" style="background:#EFF6FF; border-color:#93C5FD; color:#1e3a8a;">
       <strong>🔗 Staff Self-Sign-In Portal</strong>
-      Share <strong>staffportal.html</strong> with staff or open it on a dedicated kiosk device. Staff scan their own QR card, enter their PIN, and attendance is recorded automatically. Records appear here in real time.
+      Share <strong>staffportal.html</strong> with staff or open it on a dedicated kiosk device. Staff scan the single School QR Code, pick their name, enter their PIN, and attendance is recorded. Records appear here in real time.
       <span style="display:block;margin-top:6px"><a href="staffportal.html" id="staffPortalLink" target="_blank" style="color:#2563EB;font-weight:700;">→ Open Staff Sign-In Portal</a></span>
+    </div>
+
+    <!-- School QR Code -->
+    <div class="card">
+      <div class="card-header"><div class="icon">🔳</div> School QR Code — One QR for All Staff</div>
+      <div class="card-body" style="text-align:center">
+        <p style="color:var(--gray);font-size:14px;margin-bottom:20px;">Print this single QR code and place it at the entrance. All staff scan this one code, then select their name on the portal.</p>
+        <div id="schoolQRWrap" style="display:inline-block;background:#fff;border:2px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
+          <div id="schoolQR" style="width:180px;height:180px;margin:0 auto 12px;"></div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)" id="schoolQRLabel">Loading…</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:4px">Scan to Sign In / Out</div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="printSchoolQR()">🖨️ Print School QR</button>
+          <button class="btn btn-ghost btn-sm" onclick="generateSchoolQR()">🔄 Regenerate</button>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -862,7 +879,7 @@ function doGet(e) {
           </div>
         </div>
         <div style="display:flex; gap:12px; flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="addStaff()">➕ Add & Generate QR</button>
+          <button class="btn btn-primary" onclick="addStaff()">➕ Add Staff</button>
           <button class="btn btn-ghost" onclick="clearStaffForm()">✕ Clear</button>
         </div>
       </div>
@@ -873,7 +890,6 @@ function doGet(e) {
       <div class="card-header">
         <div class="icon">📋</div> Registered Staff
         <span style="margin-left:auto; display:flex; gap:8px;">
-          <button class="btn btn-gold btn-sm" onclick="printAllQR()">🖨️ Print All QR</button>
           <button class="btn btn-ghost btn-sm" onclick="exportStaffCSV()">📥 Export CSV</button>
         </span>
       </div>
@@ -882,17 +898,9 @@ function doGet(e) {
           <div class="empty-state">
             <div class="empty-icon">👥</div>
             <h3>No staff added yet</h3>
-            <p>Use the form above to add staff and generate QR codes.</p>
+            <p>Use the form above to add staff members.</p>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- QR Preview -->
-    <div class="card" id="qrPreviewCard" style="display:none">
-      <div class="card-header"><div class="icon">🔳</div> QR Code Preview — Click any to enlarge & print</div>
-      <div class="card-body">
-        <div id="qrGrid" class="qr-grid"></div>
       </div>
     </div>
 
