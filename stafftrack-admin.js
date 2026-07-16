@@ -38,20 +38,6 @@ function fallbackQR(targetEl, text, size) {
   targetEl.appendChild(img);
 }
 
-// ═══════════════════════════════════════════
-// QR PAYLOAD — simple, stable, no API URL embedded
-// Staff ID + name + dept + role only.
-// Changing the script URL won't break existing printed QR cards.
-// ═══════════════════════════════════════════
-function getQrPayload(staff) {
-  return JSON.stringify({
-    id:   staff.id,
-    name: staff.name,
-    dept: staff.dept,
-    role: staff.role,
-    app:  'StaffTrack'
-  });
-}
 
 // ═══════════════════════════════════════════
 // STATE — cloud is primary, localStorage is cache
@@ -291,24 +277,8 @@ function printSchoolQR() {
   win.addEventListener('load', () => win.print());
 }
 
-function copyGasScript() {
-  const el = document.getElementById('gasScript');
-  if (!el) return;
-  const text = el.value || el.textContent || '';
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text)
-      .then(() => showToast('success','📋','Copied','Google Apps Script copied to clipboard.'))
-      .catch(() => fallbackCopyGas(text));
-  } else { fallbackCopyGas(text); }
-}
-function fallbackCopyGas(text) {
-  const el = document.getElementById('gasScript');
-  if (el && el.select) {
-    el.focus(); el.select();
-    try { document.execCommand('copy'); showToast('success','📋','Copied','Script copied.'); return; } catch(e) {}
-  }
-  alert('Copy the script manually from the text box.');
-}
+
+
 
 // ═══════════════════════════════════════════
 // CAMERA & QR SCAN — FIXED
@@ -840,19 +810,29 @@ function clearAllPINs() {
 }
 
 // ═══════════════════════════════════════════
-// TOAST
+// TOAST — always animates fresh on each call
 // ═══════════════════════════════════════════
 let toastTimer;
 function showToast(type, icon, name, msg) {
   const toast = document.getElementById('toast');
   if (!toast) return;
-  toast.className = type;
+
+  // force reset off-screen so animation always replays
+  toast.classList.remove('show');
+  toast.className = type; // sets type class, removes show
+
   document.getElementById('toastIcon').textContent = icon;
   document.getElementById('toastName').textContent = name;
   document.getElementById('toastMsg').textContent  = msg;
-  toast.classList.add('show');
+
+  // micro-delay lets browser register the off-screen state before sliding in
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+    });
+  });
 }
 
 // ═══════════════════════════════════════════
