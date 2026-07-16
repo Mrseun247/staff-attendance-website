@@ -153,85 +153,6 @@
   }
   .card-body { padding: 24px; }
 
-  /* step */
-  .steps { display: flex; flex-direction: column; gap: 20px; }
-  .step {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-  }
-  .step-num {
-    min-width: 32px; height: 32px;
-    background: var(--navy);
-    color: var(--gold);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 13px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-  .step-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--navy); }
-  .step-content p { font-size: 13px; color: var(--gray); line-height: 1.6; }
-  .step-content code {
-    display: inline-block;
-    background: #F0F4FF;
-    color: var(--navy);
-    border: 1px solid #C7D4F0;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-family: monospace;
-    margin-top: 4px;
-  }
-  .step-content pre {
-    background: #0F1C3F;
-    color: #A8D8EA;
-    padding: 16px;
-    border-radius: 10px;
-    font-size: 11.5px;
-    line-height: 1.7;
-    overflow-x: auto;
-    margin-top: 10px;
-    font-family: 'Courier New', monospace;
-  }
-  .step-content pre .kw { color: #F5A623; }
-  .step-content pre .str { color: #6EE7B7; }
-  .step-content pre .cmt { color: #6B7280; }
-  .gas-details {
-    margin-top: 10px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: #f8fafc;
-    overflow: hidden;
-  }
-  .gas-details summary {
-    cursor: pointer;
-    padding: 12px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--navy);
-    list-style: none;
-  }
-  .gas-details summary::-webkit-details-marker { display: none; }
-  .gas-details[open] summary { border-bottom: 1px solid var(--border); }
-  .gas-textarea {
-    width: 100%;
-    border: none;
-    background: #0F1C3F;
-    color: #A8D8EA;
-    padding: 14px;
-    font-family: 'Courier New', monospace;
-    font-size: 11.5px;
-    line-height: 1.65;
-    resize: vertical;
-    min-height: 200px;
-    outline: none;
-  }
-  .gas-copy-row { padding: 10px 14px 14px; }
-
   /* form */
   .form-row {
     display: grid;
@@ -674,15 +595,9 @@
   </div>
   <div class="setup-body">
 
-    <!-- Google Sheet Setup -->
-    <div class="notice">
-      <strong>⚡ First Time Setup</strong>
-      Go to the <strong>Admin</strong> tab → paste your Google Apps Script Web App URL to connect your Google Sheet. See instructions below.
-    </div>
-
     <div class="notice" style="background:#EFF6FF; border-color:#93C5FD; color:#1e3a8a;">
-      <strong>🔗 Staff Self-Sign-In Portal</strong>
-      Share <strong>staffportal.html</strong> with staff or open it on a dedicated kiosk device. Staff scan the single School QR Code, pick their name, enter their PIN, and attendance is recorded. Records appear here in real time.
+      <strong>🔗 Staff Sign-In Portal</strong>
+      Open on a kiosk device or share the link with staff. They scan the School QR, pick their name and enter their PIN.
       <span style="display:block;margin-top:6px"><a href="staffportal.html" id="staffPortalLink" target="_blank" style="color:#2563EB;font-weight:700;">→ Open Staff Sign-In Portal</a></span>
     </div>
 
@@ -699,144 +614,6 @@
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button class="btn btn-gold" onclick="printSchoolQR()">🖨️ Print School QR</button>
           <button class="btn btn-ghost btn-sm" onclick="generateSchoolQR()">🔄 Regenerate</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><div class="icon">1️⃣</div> How to Connect Google Sheets</div>
-      <div class="card-body">
-        <div class="steps">
-          <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <h4>Create a Google Sheet</h4>
-              <p>Open <a href="https://sheets.google.com" target="_blank" style="color:var(--gold)">Google Sheets</a> → create a new sheet. Name the first sheet <code>Attendance</code>. Add these headers in row 1:</p>
-              <code>ID | Name | Department | Role | Date | Time | Status | Day</code>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <h4>Open Apps Script</h4>
-              <p>In your Google Sheet: <strong>Extensions → Apps Script</strong>. Delete any existing code and paste the script below (click to expand, then copy):</p>
-              <details class="gas-details">
-                <summary>📋 Show Google Apps Script code</summary>
-                <textarea id="gasScript" class="gas-textarea" readonly rows="14">var DEFAULT_STATE = {
-  staff: [],
-  logs: [],
-  pins: {},
-  deviceSessions: {},
-  school: { name: "Victory Montessori Int'l School", branch: "", session: "2025/2026" },
-  rules: { resumption: "07:30", closing: "15:00", late: 15 }
-};
-
-function getState() {
-  var raw = PropertiesService.getScriptProperties().getProperty("STAFFTRACK_STATE");
-  if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
-  var state = JSON.parse(raw);
-  Object.keys(DEFAULT_STATE).forEach(function(key) {
-    if (state[key] === undefined) state[key] = DEFAULT_STATE[key];
-  });
-  return state;
-}
-
-function saveState(state) {
-  PropertiesService.getScriptProperties().setProperty("STAFFTRACK_STATE", JSON.stringify(state));
-}
-
-function ensureAttendanceSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Attendance") || ss.insertSheet("Attendance");
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(["ID","Name","Department","Role","Date","Time","Status","Day","Shift","Source"]);
-  }
-  return sheet;
-}
-
-function appendLogRow(entry) {
-  ensureAttendanceSheet().appendRow([
-    entry.id || "",
-    entry.name || "",
-    entry.department || entry.dept || "",
-    entry.role || "",
-    entry.date || "",
-    entry.time || "",
-    entry.status || "",
-    entry.day || "",
-    entry.shift || "",
-    entry.device || ""
-  ]);
-}
-
-function doPost(e) {
-  var payload = JSON.parse((e.postData && e.postData.contents) || "{}");
-  var action = payload.action || "addLog";
-  var data = payload.data || payload;
-  var state = getState();
-
-  if (action === "saveAll") {
-    state.staff = data.staff || state.staff;
-    state.logs = data.logs || state.logs;
-    state.pins = data.pins || state.pins;
-    state.deviceSessions = data.deviceSessions || state.deviceSessions;
-    state.school = data.school || state.school;
-    state.rules = data.rules || state.rules;
-  } else if (action === "saveStaff") {
-    state.staff = data || [];
-  } else if (action === "addLog") {
-    state.logs.unshift(data);
-    appendLogRow(data);
-  } else if (action === "saveLogs") {
-    state.logs = data || [];
-  } else if (action === "savePins") {
-    state.pins = data || {};
-  } else if (action === "saveDeviceSessions") {
-    state.deviceSessions = data || {};
-  } else if (action === "saveSchool") {
-    state.school = data || state.school;
-  } else if (action === "saveRules") {
-    state.rules = data || state.rules;
-  } else if (action === "resetAll") {
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-    var sheet = ensureAttendanceSheet();
-    sheet.clear();
-    sheet.appendRow(["ID","Name","Department","Role","Date","Time","Status","Day","Shift","Source"]);
-  }
-
-  saveState(state);
-  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doGet(e) {
-  var state = getState();
-  state.ok = true;
-  var json = JSON.stringify(state);
-  var callback = e.parameter.callback;
-  return ContentService
-    .createTextOutput(callback ? callback + "(" + json + ");" : json)
-    .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
-}</textarea>
-                <div class="gas-copy-row">
-                  <button type="button" class="btn btn-ghost btn-sm" onclick="copyGasScript()">📋 Copy script</button>
-                </div>
-              </details>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <h4>Deploy as Web App</h4>
-              <p>Click <strong>Deploy → New Deployment</strong>. Select type: <strong>Web App</strong>. Set "Execute as" = <strong>Me</strong>, "Who has access" = <strong>Anyone</strong>. Click Deploy, authorize, and copy the Web App URL.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">4</div>
-            <div class="step-content">
-              <h4>Paste URL in Admin Tab</h4>
-              <p>Go to the <strong>Admin</strong> tab → paste the Web App URL and click Save. The system will now log attendance directly to your Google Sheet.</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -932,9 +709,7 @@ function doGet(e) {
       <button class="btn btn-ghost" style="color:white;border-color:rgba(255,255,255,0.3)" onclick="manualScan()">⌨️ Manual ID</button>
     </div>
     <p style="color:rgba(255,255,255,0.35); font-size:12px; margin-top:20px; text-align:center; max-width:300px; line-height:1.6;">
-      Admin override scan — bypasses PIN &amp; device lock.<br/>
-      🌅 First scan = Morning Sign-In &nbsp;·&nbsp; 🌆 Second scan = Afternoon Sign-Out.<br/>
-      Staff with both IN &amp; OUT today will be blocked from a third entry.
+      🌅 First scan = Morning Sign-In &nbsp;·&nbsp; 🌆 Second scan = Afternoon Sign-Out.
     </p>
   </div>
 </div>
@@ -945,7 +720,7 @@ function doGet(e) {
 <div id="page-logs" class="page">
   <div class="logs-header">
     <h2>📋 Attendance Records</h2>
-    <p>Live records from both Admin Scan and Staff Self Sign-In portal. Auto-refreshes every 15 seconds.</p>
+    <p>Live records — auto-refreshes every 15 seconds.</p>
     <div class="logs-controls">
       <input type="text" id="logSearch" placeholder="Search name or ID…" oninput="renderLogs()"/>
       <input type="date" id="logDate" onchange="renderLogs()"/>
@@ -987,13 +762,13 @@ function doGet(e) {
 <div id="page-admin" class="page">
   <div class="logs-header">
     <h2>🔧 Admin Settings</h2>
-    <p>Configure Google Sheets connection and system options.</p>
+    <p>Manage Google Sheets connection and school configuration.</p>
   </div>
   <div class="admin-body">
 
     <div class="google-setup">
       <h3>☁️ Google Sheets Connection</h3>
-      <p>Paste your Google Apps Script Web App URL here. All QR scans will POST directly to your sheet.</p>
+      <p>Your attendance data syncs to Google Sheets automatically.</p>
       <div class="url-input-wrap">
         <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/…/exec" value="https://script.google.com/macros/s/AKfycbz2bGmhJq9XjYni5ondNxIPFBzGsquigfPz7e_fmiV9KdYEeT_bC2N59jMDJF8InQM2/exec"/>
         <button class="btn btn-gold" onclick="saveScriptUrl()">Save</button>
