@@ -322,8 +322,14 @@ function activateToken(token) {
   localStorage.setItem('vmis_active_token', JSON.stringify(tokenData));
   postCloud('saveActiveToken', tokenData);
 
+  // show token text prominently for staff who can't scan
+  const tokenDisplay = document.getElementById('activeTokenDisplay');
+  const tokenText    = document.getElementById('activeTokenText');
+  if (tokenDisplay) tokenDisplay.style.display = 'block';
+  if (tokenText)    tokenText.textContent = token;
+
   startRqrTimer(expiresAt);
-  showToast('success', '✅', 'QR Activated', 'Staff can now scan this QR code to sign in.');
+  showToast('success', '✅', 'QR Activated', 'Staff can scan this QR or type the token code.');
 }
 
 function startRqrTimer(expiresAt) {
@@ -347,6 +353,9 @@ function startRqrTimer(expiresAt) {
       activeToken = null;
       localStorage.removeItem('vmis_active_token');
       postCloud('saveActiveToken', null);
+      // hide token display
+      const td = document.getElementById('activeTokenDisplay');
+      if (td) td.style.display = 'none';
       // remove active badge
       rqrCodes.forEach(r => {
         r.card.classList.remove('active');
@@ -381,7 +390,8 @@ function printActiveQR() {
   doc.write('<h2>' + (schoolInfo.name || 'StaffTrack') + '</h2>');
   doc.write('<div class="sub">Scan to Sign In / Out — Valid for ' + expiryMins + ' min</div>');
   doc.write('<img src="' + src + '" width="240" height="240" alt="QR"/>');
-  doc.write('<div class="note">This QR expires in ' + expiryMins + ' minutes.<br>Do not share outside school premises.</div>');
+  doc.write('<div style="font-size:22px;font-weight:900;letter-spacing:3px;margin:16px 0;color:#0F1C3F">' + active.token + '</div>');
+  doc.write('<div class="note">Scan the QR code above, or type the token code on the sign-in portal.<br>Expires in ' + expiryMins + ' minutes. Do not share outside school premises.</div>');
   doc.write('</body></html>');
   doc.close();
   win.addEventListener('load', () => win.print());
@@ -460,22 +470,26 @@ function scanFrame() {
 
 function handleScannedData(raw) {
   let parsed = null;
-
-  // Try JSON format first (our QR payload)
   try { parsed = JSON.parse(raw); } catch { /* not JSON */ }
 
+  // Rotating token QR format {t, app}
+  if (parsed && parsed.t && parsed.app === 'StaffTrack') {
+    // This is a school QR — for admin scan page, just open manual ID prompt
+    showToast('success', '✅', 'School QR Detected', 'Use the staff portal for self sign-in, or use Manual ID here.');
+    return;
+  }
+
+  // Legacy staff QR format {id, name}
   if (parsed && parsed.id && parsed.name) {
-    // Our standard QR format — look up staff or use embedded data
     const knownStaff = staffList.find(s => s.id === parsed.id);
     processAttendance(knownStaff || parsed);
     return;
   }
 
-  // Fallback: plain text Staff ID
+  // Plain text Staff ID
   const byId = staffList.find(s => s.id === raw.toUpperCase());
   if (byId) { processAttendance(byId); return; }
 
-  // Unknown QR — log but don't show error toast for every frame
   console.log('Unknown QR scanned:', raw);
 }
 
