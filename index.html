@@ -882,6 +882,12 @@
         <div id="rqrTimerWrap" style="margin-bottom:12px;display:none;">
           Active QR expires in: <span id="rqrTimer">—</span>
         </div>
+        <!-- Active token shown large so staff can type it on the portal -->
+        <div id="activeTokenDisplay" style="display:none;margin-bottom:16px;background:#0F1C3F;border-radius:12px;padding:16px 20px;text-align:center;">
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Active Token — Staff can type this on the portal</div>
+          <div id="activeTokenText" style="font-size:28px;font-weight:900;color:#F5A623;letter-spacing:4px;font-family:monospace;"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:6px;">If camera doesn't work, staff tap "Can't scan?" and type this code</div>
+        </div>
         <div id="rqrGrid" class="rqr-grid"></div>
       </div>
     </div>
