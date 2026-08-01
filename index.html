@@ -457,8 +457,74 @@
     border-radius: 50%;
     margin-right: 6px;
   }
-  .status-dot.in { background: var(--green); }
-  .status-dot.out { background: var(--red); }
+  /* ── LATE BADGE ── */
+  .badge-late { background: #FEE2E2; color: #991B1B; }
+  .badge-late-warn { background: #FEF3C7; color: #92400E; }
+
+  /* ── RECORDS TABLE — ensure text always visible ── */
+  .log-table { width: 100%; border-collapse: collapse; color: var(--text); }
+  .log-table th {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--gray);
+    padding: 10px 14px; background: var(--off-white);
+    border-bottom: 1px solid var(--border); text-align: left;
+    white-space: nowrap;
+  }
+  .log-table td {
+    padding: 12px 14px; border-bottom: 1px solid var(--gray-light);
+    font-size: 13px; vertical-align: middle; color: var(--text);
+    white-space: nowrap;
+  }
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-table tr:hover td { background: #F9FAFB; }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 18px 16px;
+  }
+  .stat-card .stat-val {
+    font-size: 28px; font-weight: 800; color: var(--navy);
+    line-height: 1; margin-bottom: 4px;
+  }
+  .stat-card .stat-lbl {
+    font-size: 11px; color: var(--gray); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .stat-card.gold .stat-val { color: var(--gold); }
+  .stat-card.green .stat-val { color: var(--green); }
+  .stat-card.red .stat-val { color: var(--red); }
+
+  /* ── LATE REPORT CARD ── */
+  .late-report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .late-staff-card {
+    background: var(--white);
+    border: 1.5px solid #FEE2E2;
+    border-left: 4px solid var(--red);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .late-staff-card .lsc-name { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+  .late-staff-card .lsc-role { font-size: 12px; color: var(--gray); margin-bottom: 8px; }
+  .late-staff-card .lsc-count {
+    display: inline-block;
+    background: #FEE2E2; color: #991B1B;
+    font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
 
   .empty-state {
     text-align: center;
@@ -497,9 +563,103 @@
   }
   @media (max-width: 640px) {
     .form-row, .config-grid { grid-template-columns: 1fr; }
-    .nav-tabs { gap: 2px; }
-    .nav-tab { padding: 8px 10px; font-size: 12px; }
+    .nav-tabs { gap: 0; }
+    .nav-tab { padding: 6px 7px; font-size: 11px; }
     .scan-box { width: 240px; height: 240px; }
+    .setup-body, .logs-body, .admin-body { padding: 16px 12px; }
+    .card-header { font-size: 12px; padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+    .card-body { padding: 14px; }
+    .logs-controls { flex-direction: column; }
+    .logs-controls input, .logs-controls select { min-width: unset; width: 100%; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .card-header span[style*="margin-left:auto"] { margin-left: 0 !important; width: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+    .log-table { font-size: 12px; }
+    .log-table th, .log-table td { padding: 8px 10px; }
+    .staff-table th, .staff-table td { padding: 8px 10px; font-size: 12px; }
+    .btn { font-size: 12px; padding: 10px 14px; }
+    .btn-sm { font-size: 11px; padding: 6px 10px; }
+    .setup-header h1 { font-size: 22px; }
+    .setup-header p { font-size: 13px; }
+    nav { padding: 0 12px; height: 56px; }
+    .nav-brand span { font-size: 15px; }
+    .nav-right { display: none; }
+    #toast { min-width: 90vw; padding: 14px 16px; bottom: 16px; }
+  }
+
+  /* rotating QR grid */
+  .rqr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .rqr-card {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--white);
+    position: relative;
+  }
+  .rqr-card:hover { border-color: var(--gold); }
+  .rqr-card.active {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
+  }
+  .rqr-card .rqr-num {
+    font-size: 11px; font-weight: 700; color: var(--gray);
+    margin-bottom: 6px;
+  }
+  .rqr-card.active .rqr-num { color: var(--green); }
+  .rqr-active-badge {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    background: var(--green); color: white;
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    white-space: nowrap;
+  }
+  .rqr-expiry {
+    font-size: 10px; color: var(--gray); margin-top: 4px;
+  }
+  .rqr-expiry.expiring { color: var(--red); font-weight: 700; }
+  #rqrTimer {
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    background: #EFF6FF; border-radius: 8px; padding: 6px 14px;
+    display: inline-block; margin-top: 8px;
+  }
+  #rqrTimer.warn { background: #FEF3C7; color: #92400E; }
+  #rqrTimer.danger { background: #FEE2E2; color: var(--red); }
+
+  /* report styles */
+  .report-staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .report-staff-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .report-staff-card:hover { border-color: var(--gold); box-shadow: 0 4px 12px rgba(245,166,35,0.15); }
+  .report-staff-card.selected { border-color: var(--navy); background: #EFF6FF; }
+  .report-staff-card .rsn { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .report-staff-card .rsr { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .report-summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 640px) {
+    .rqr-grid { grid-template-columns: repeat(3, 1fr); }
+    .report-staff-grid { grid-template-columns: repeat(2, 1fr); }
+    .report-summary-row { grid-template-columns: repeat(2, 1fr); }
   }
 
   /* modal */
@@ -565,9 +725,102 @@
   .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray); }
   .conn-dot.connected { background: var(--green); animation: pulse 2s infinite; }
   .conn-dot.error { background: var(--red); }
+
+  /* ── LOGIN SCREEN ── */
+  #loginScreen {
+    position: fixed; inset: 0;
+    background: linear-gradient(160deg, var(--navy) 0%, #1a3060 100%);
+    z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  #loginScreen.hidden { display: none; }
+  .login-card {
+    background: var(--white);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    padding: 40px 36px;
+    width: 100%; max-width: 400px;
+    text-align: center;
+  }
+  .login-logo { font-size: 48px; margin-bottom: 12px; }
+  .login-title { font-size: 24px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
+  .login-field { margin-bottom: 14px; text-align: left; }
+  .login-field label { display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .login-field input {
+    width: 100%; padding: 12px 14px;
+    border: 2px solid var(--border); border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    color: var(--text); outline: none; transition: border-color 0.2s;
+  }
+  .login-field input:focus { border-color: var(--navy); }
+  .login-btn {
+    width: 100%; padding: 14px;
+    background: var(--navy); color: var(--white);
+    border: none; border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-top: 4px; transition: background 0.2s;
+  }
+  .login-btn:hover { background: #162547; }
+  .login-error {
+    background: #FEE2E2; color: #991B1B;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; font-weight: 600; margin-top: 12px; display: none;
+  }
+  .login-role-badge {
+    display: inline-block;
+    background: #EFF6FF; color: #1e40af;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; margin-bottom: 20px;
+  }
+
+  /* ── SUPER ADMIN PANEL ── */
+  .admin-mgr-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 10px;
+  }
+  .admin-mgr-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), #2a4a8a);
+    color: white; font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .admin-mgr-info { flex: 1; }
+  .admin-mgr-info .amn { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .admin-mgr-info .amu { font-size: 12px; color: var(--gray); }
+  .admin-mgr-info .amr { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 3px; }
+  .amr.super { background: #FEF3C7; color: #92400E; }
+  .amr.admin { background: #EFF6FF; color: #1e40af; }
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🏫</div>
+    <div class="login-title">StaffTrack</div>
+    <div class="login-sub">Admin Portal — Sign in to continue</div>
+    <div class="login-role-badge" id="loginRoleBadge">Admin Login</div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="loginError">Incorrect username or password.</div>
+  </div>
+</div>
 
 <!-- NAV -->
 <nav>
@@ -579,10 +832,16 @@
     <button class="nav-tab active" onclick="showPage('setup')">⚙️ Setup</button>
     <button class="nav-tab" onclick="showPage('scan')">📷 Scan</button>
     <button class="nav-tab" onclick="showPage('logs')">📋 Records</button>
+    <button class="nav-tab" onclick="showPage('reports')">📊 Reports</button>
     <button class="nav-tab" onclick="showPage('security')">🔐 Security</button>
     <button class="nav-tab" onclick="showPage('admin')">🔧 Admin</button>
+    <button class="nav-tab" id="superAdminTab" style="display:none" onclick="showPage('superadmin')">👑 Super Admin</button>
   </div>
-  <div class="nav-right" id="clockDisplay"></div>
+  <div class="nav-right" style="display:flex;align-items:center;gap:10px;">
+    <span id="clockDisplay"></span>
+    <span id="loggedInAs" style="color:rgba(255,255,255,0.5);font-size:11px;"></span>
+    <button onclick="doLogout()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;">Sign Out</button>
+  </div>
 </nav>
 
 <!-- ══════════════════════════════════════════════
@@ -603,18 +862,27 @@
 
     <!-- School QR Code -->
     <div class="card">
-      <div class="card-header"><div class="icon">🔳</div> School QR Code — One QR for All Staff</div>
-      <div class="card-body" style="text-align:center">
-        <p style="color:var(--gray);font-size:14px;margin-bottom:20px;">Print this single QR code and place it at the entrance. All staff scan this one code, then select their name on the portal.</p>
-        <div id="schoolQRWrap" style="display:inline-block;background:#fff;border:2px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
-          <div id="schoolQR" style="width:180px;height:180px;margin:0 auto 12px;"></div>
-          <div style="font-size:13px;font-weight:700;color:var(--navy)" id="schoolQRLabel">Loading…</div>
-          <div style="font-size:11px;color:var(--gray);margin-top:4px">Scan to Sign In / Out</div>
+      <div class="card-header"><div class="icon">🔐</div> Rotating QR Security</div>
+      <div class="card-body">
+        <p style="color:var(--gray);font-size:13px;margin-bottom:16px;">Generate multiple QR codes. Click one to make it <strong>active</strong> — only that code works on the portal. Rotate regularly to prevent staff sharing the QR. Codes auto-expire.</p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.4px">Expire after</label>
+          <select id="rqrExpiry" style="width:auto;padding:6px 10px;font-size:13px;" onchange="saveRqrSettings()">
+            <option value="2">2 min</option>
+            <option value="5" selected>5 min</option>
+            <option value="10">10 min</option>
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">1 hour</option>
+            <option value="0">Never</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="generateRotatingQRs()">🔄 Generate New QR Set</button>
+          <button class="btn btn-ghost btn-sm" onclick="printActiveQR()">🖨️ Print Active QR</button>
         </div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button class="btn btn-gold" onclick="printSchoolQR()">🖨️ Print School QR</button>
-          <button class="btn btn-ghost btn-sm" onclick="generateSchoolQR()">🔄 Regenerate</button>
+        <div id="rqrTimerWrap" style="margin-bottom:12px;display:none;">
+          Active QR expires in: <span id="rqrTimer">—</span>
         </div>
+        <div id="rqrGrid" class="rqr-grid"></div>
       </div>
     </div>
 
@@ -739,6 +1007,19 @@
   </div>
   <div class="logs-body">
     <div class="stats-row" id="statsRow"></div>
+
+    <!-- Late Arrivals Today -->
+    <div class="card" id="lateReportCard" style="display:none;margin-bottom:20px;">
+      <div class="card-header" style="background:#FEF2F2;border-color:#FECACA;">
+        <div class="icon" style="background:#DC2626">⚠️</div>
+        <span style="color:#991B1B;font-weight:700;">Late Arrivals Today</span>
+        <span id="lateCountBadge" style="margin-left:8px;background:#DC2626;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;"></span>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto;">
+        <div id="lateTableWrap"></div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-header">
         <div class="icon">📊</div> Today's Attendance
@@ -762,22 +1043,9 @@
 <div id="page-admin" class="page">
   <div class="logs-header">
     <h2>🔧 Admin Settings</h2>
-    <p>Manage Google Sheets connection and school configuration.</p>
+    <p>Manage school configuration and attendance rules.</p>
   </div>
   <div class="admin-body">
-
-    <div class="google-setup">
-      <h3>☁️ Google Sheets Connection</h3>
-      <p>Your attendance data syncs to Google Sheets automatically.</p>
-      <div class="url-input-wrap">
-        <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/…/exec" value="https://script.google.com/macros/s/AKfycbz2bGmhJq9XjYni5ondNxIPFBzGsquigfPz7e_fmiV9KdYEeT_bC2N59jMDJF8InQM2/exec"/>
-        <button class="btn btn-gold" onclick="saveScriptUrl()">Save</button>
-      </div>
-      <div class="conn-status" id="connStatus">
-        <div class="conn-dot" id="connDot"></div>
-        <span id="connText">Not configured</span>
-      </div>
-    </div>
 
     <div class="config-grid">
       <div class="card">
@@ -828,6 +1096,98 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE: REPORTS
+══════════════════════════════════════════════ -->
+<div id="page-reports" class="page">
+  <div class="logs-header">
+    <h2>📊 Monthly Reports</h2>
+    <p>Generate attendance reports for any month — individual staff or all staff.</p>
+    <div class="logs-controls" style="margin-top:16px;flex-wrap:wrap;">
+      <select id="reportMonth" style="flex:0 0 auto;min-width:140px;">
+      </select>
+      <select id="reportYear" style="flex:0 0 auto;min-width:100px;"></select>
+      <select id="reportStaff" style="flex:1;min-width:160px;">
+        <option value="">All Staff</option>
+      </select>
+      <button class="btn btn-gold btn-sm" onclick="generateReport()">📊 Generate Report</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportReportCSV()">📥 Export CSV</button>
+      <button class="btn btn-primary btn-sm" onclick="printReport()">🖨️ Print Report</button>
+    </div>
+  </div>
+  <div class="logs-body">
+    <!-- Late Arrivals Report -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header" style="background:#FEF2F2;border-color:#FECACA;">
+        <div class="icon" style="background:#DC2626">⚠️</div>
+        <span style="color:#991B1B;font-weight:700;">Staff Late Arrival Report</span>
+        <span style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm" onclick="renderLateReport()">🔄 Refresh</button>
+        </span>
+      </div>
+      <div class="card-body" style="padding:16px">
+        <div id="lateReportOutput">
+          <div class="empty-state" style="padding:32px"><div class="empty-icon">⏳</div><h3>Click Refresh to load</h3></div>
+        </div>
+      </div>
+    </div>
+    <div id="reportOutput">
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <h3>Select a month and click Generate</h3>
+        <p>Reports show attendance for each working day in the selected month.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE: SUPER ADMIN
+══════════════════════════════════════════════ -->
+<div id="page-superadmin" class="page">
+  <div class="logs-header">
+    <h2>👑 Super Admin</h2>
+    <p>Manage admin accounts and system access.</p>
+  </div>
+  <div class="admin-body">
+    <div class="card">
+      <div class="card-header"><div class="icon">➕</div> Add Admin Account</div>
+      <div class="card-body">
+        <div class="form-row">
+          <div>
+            <label>Full Name</label>
+            <input type="text" id="newAdminName" placeholder="e.g. Mrs. Adebayo"/>
+          </div>
+          <div>
+            <label>Username</label>
+            <input type="text" id="newAdminUser" placeholder="e.g. adebayo"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Password</label>
+            <input type="password" id="newAdminPass" placeholder="Choose a password"/>
+          </div>
+          <div>
+            <label>Role</label>
+            <select id="newAdminRole">
+              <option value="admin">Admin</option>
+              <option value="superadmin">Super Admin</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addAdminAccount()">➕ Add Account</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="icon">👤</div> Admin Accounts</div>
+      <div class="card-body" style="padding:0">
+        <div id="adminListWrap"></div>
+      </div>
+    </div>
   </div>
 </div>
 
