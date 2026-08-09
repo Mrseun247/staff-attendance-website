@@ -430,6 +430,34 @@ function printActiveQR() {
   win.addEventListener('load', () => win.print());
 }
 
+// Per-staff late/absent summary for the current month so far. Shared by the Records
+// page cards and the CSV export, so both always agree on the same numbers.
+function getMonthlyAttendanceSummary_() {
+  const monthLogs = freshLogs().filter(l => (l.date || '').slice(0, 7) === getDateStr(new Date()).slice(0, 7));
+  const schoolDaysThisMonth = getSchoolDaysThisMonth_();
+
+  const lateByStaff = {};
+  monthLogs.filter(l => l.status === 'IN' && l.isLate).forEach(l => {
+    if (!lateByStaff[l.id]) lateByStaff[l.id] = { staff: l, count: 0, dates: [] };
+    lateByStaff[l.id].count++;
+    lateByStaff[l.id].dates.push(l.date);
+  });
+  const lateMonthRows = Object.values(lateByStaff).sort((a, b) => b.count - a.count);
+
+  const presentDatesByStaff = {};
+  monthLogs.filter(l => l.status === 'IN').forEach(l => {
+    if (!presentDatesByStaff[l.id]) presentDatesByStaff[l.id] = new Set();
+    presentDatesByStaff[l.id].add(l.date);
+  });
+  const absentMonthRows = staffList.map(s => {
+    const present = presentDatesByStaff[s.id] || new Set();
+    const missedDates = schoolDaysThisMonth.filter(d => !present.has(d));
+    return { staff: s, count: missedDates.length, dates: missedDates };
+  }).filter(r => r.count > 0).sort((a, b) => b.count - a.count);
+
+  return { lateMonthRows, absentMonthRows };
+}
+
 // ── Logs rendering ──
 function renderLogs() {
   logs = freshLogs();
@@ -485,17 +513,7 @@ function renderLogs() {
   }
 
   // ── Late This Month / Absent This Month (per staff summary) ──
-  const monthPrefix = today.slice(0, 7); // "YYYY-MM"
-  const monthLogs = logs.filter(l => (l.date || '').slice(0, 7) === monthPrefix);
-  const schoolDaysThisMonth = getSchoolDaysThisMonth_();
-
-  const lateByStaff = {};
-  monthLogs.filter(l => l.status === 'IN' && l.isLate).forEach(l => {
-    if (!lateByStaff[l.id]) lateByStaff[l.id] = { staff: l, count: 0, dates: [] };
-    lateByStaff[l.id].count++;
-    lateByStaff[l.id].dates.push(l.date);
-  });
-  const lateMonthRows = Object.values(lateByStaff).sort((a, b) => b.count - a.count);
+  const { lateMonthRows, absentMonthRows } = getMonthlyAttendanceSummary_();
 
   const lateMonthCard = document.getElementById('lateMonthCard');
   const lateMonthWrap = document.getElementById('lateMonthWrap');
@@ -507,17 +525,6 @@ function renderLogs() {
       lateMonthRows.map(r => '<tr><td><strong>' + r.staff.name + '</strong></td><td>' + (r.staff.department || '') + '</td><td>' + (r.staff.role || '') + '</td><td><span class="badge badge-late">' + r.count + '×</span></td><td style="white-space:normal;font-size:12px;color:var(--gray)">' + r.dates.join(', ') + '</td></tr>').join('') +
       '</tbody></table>';
   }
-
-  const presentDatesByStaff = {};
-  monthLogs.filter(l => l.status === 'IN').forEach(l => {
-    if (!presentDatesByStaff[l.id]) presentDatesByStaff[l.id] = new Set();
-    presentDatesByStaff[l.id].add(l.date);
-  });
-  const absentMonthRows = staffList.map(s => {
-    const present = presentDatesByStaff[s.id] || new Set();
-    const missedDates = schoolDaysThisMonth.filter(d => !present.has(d));
-    return { staff: s, count: missedDates.length, dates: missedDates };
-  }).filter(r => r.count > 0).sort((a, b) => b.count - a.count);
 
   const absentMonthCard = document.getElementById('absentMonthCard');
   const absentMonthWrap = document.getElementById('absentMonthWrap');
@@ -561,7 +568,19 @@ function exportLogsCSV() {
   logs = freshLogs();
   const header = ['ID', 'Name', 'Department', 'Role', 'Date', 'Time', 'Day', 'Shift', 'Status'];
   const rows = logs.map(l => [l.id, l.name, l.department, l.role, l.date, l.time, l.day, l.shift || '', l.status]);
-  downloadCSV([header, ...rows], 'attendance_logs.csv');
+
+  const { lateMonthRows, absentMonthRows } = getMonthlyAttendanceSummary_();
+  const out = [header, ...rows];
+  out.push([]);
+  out.push(['LATE THIS MONTH']);
+  out.push(['Staff ID', 'Name', 'Department', 'Role', 'Times Late', 'Dates']);
+  lateMonthRows.forEach(r => out.push([r.staff.id, r.staff.name, r.staff.department, r.staff.role, r.count, r.dates.join('; ')]));
+  out.push([]);
+  out.push(['ABSENT THIS MONTH']);
+  out.push(['Staff ID', 'Name', 'Department', 'Role', 'Days Absent', 'Dates']);
+  absentMonthRows.forEach(r => out.push([r.staff.id, r.staff.name, r.staff.dept, r.staff.role, r.count, r.dates.join('; ')]));
+
+  downloadCSV(out, 'attendance_report.csv');
 }
 function exportStaffCSV() {
   const header = ['ID', 'Name', 'Department', 'Role'];
