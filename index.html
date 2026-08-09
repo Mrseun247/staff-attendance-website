@@ -2,869 +2,405 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>StaffTrack – QR Attendance System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0F1C3F"/>
+<title>StaffTrack — QR Attendance System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <style>
-  :root {
-    --navy: #0F1C3F;
-    --navy-light: #162547;
-    --gold: #F5A623;
-    --gold-light: #FDB944;
-    --white: #FFFFFF;
-    --off-white: #F7F8FC;
-    --green: #22C55E;
-    --red: #EF4444;
-    --gray: #6B7280;
-    --gray-light: #E5E7EB;
-    --border: #D1D5DB;
-    --text: #111827;
-    --shadow: 0 4px 24px rgba(15,28,63,0.12);
-    --shadow-lg: 0 8px 40px rgba(15,28,63,0.18);
-  }
+:root {
+  --navy: #0F1C3F;
+  --navy2: #162547;
+  --gold: #F5A623;
+  --gold2: #FDB944;
+  --white: #FFFFFF;
+  --off: #F7F8FC;
+  --green: #16A34A;
+  --green-bg: #DCFCE7;
+  --red: #DC2626;
+  --red-bg: #FEE2E2;
+  --amber: #D97706;
+  --amber-bg: #FEF3C7;
+  --gray: #6B7280;
+  --gray-light: #E5E7EB;
+  --border: #E5E7EB;
+  --text: #111827;
+  --shadow: 0 4px 24px rgba(15,28,63,0.12);
+  --shadow-lg: 0 8px 40px rgba(15,28,63,0.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Inter', sans-serif; background: var(--off); color: var(--text); min-height: 100vh; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ══════════════════════════ LOGIN SCREEN (shared gate for admin + staff) ══════════════════════════ */
+#loginScreen {
+  position: fixed; inset: 0;
+  background: linear-gradient(160deg, var(--navy) 0%, #1a3060 100%);
+  z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+#loginScreen.hidden { display: none; }
+.login-card {
+  background: var(--white); border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  padding: 40px 36px; width: 100%; max-width: 400px; text-align: center;
+}
+.login-logo { font-size: 48px; margin-bottom: 12px; }
+.login-title { font-size: 24px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+.login-sub { font-size: 13px; color: var(--gray); margin-bottom: 24px; }
+.login-field { margin-bottom: 14px; text-align: left; }
+.login-field label { display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+.login-field input {
+  width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px;
+  font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.2s;
+}
+.login-field input:focus { border-color: var(--navy); }
+.login-btn {
+  width: 100%; padding: 14px; background: var(--navy); color: var(--white); border: none; border-radius: 10px;
+  font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 4px; transition: background 0.2s;
+}
+.login-btn:hover { background: #162547; }
+.login-error {
+  background: var(--red-bg); color: #991B1B; border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; font-weight: 600; margin-top: 12px; display: none;
+}
+.login-hint { font-size: 11px; color: #9CA3AF; margin-top: 18px; line-height: 1.6; }
+.login-reveal {
+  display: none; margin-top: 16px; padding: 12px 14px; background: var(--green-bg);
+  color: #166534; border-radius: 10px; font-size: 12px; text-align: left; line-height: 1.6;
+}
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--off-white);
-    color: var(--text);
-    min-height: 100vh;
-  }
+/* ══════════════════════════ ADMIN APP ══════════════════════════ */
+#adminApp { display: none; }
+#adminApp.active { display: block; }
+nav {
+  background: var(--navy); padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
+  height: 64px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; color: var(--white); font-weight: 700; font-size: 18px; letter-spacing: -0.3px; }
+.nav-brand .dot { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
+.nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav-tab {
+  background: none; border: none; color: rgba(255,255,255,0.6); font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+}
+.nav-tab:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+.nav-tab.active { background: var(--gold); color: var(--navy); font-weight: 700; }
+.nav-right { color: rgba(255,255,255,0.5); font-size: 12px; display: flex; align-items: center; gap: 10px; }
 
-  /* ── NAV ── */
-  nav {
-    background: var(--navy);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
-  }
-  .nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--white);
-    font-weight: 700;
-    font-size: 18px;
-    letter-spacing: -0.3px;
-  }
-  .nav-brand .dot {
-    width: 8px; height: 8px;
-    background: var(--gold);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(1.3); }
-  }
-  .nav-tabs {
-    display: flex;
-    gap: 4px;
-  }
-  .nav-tab {
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.6);
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 8px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav-tab:hover { background: rgba(255,255,255,0.08); color: var(--white); }
-  .nav-tab.active { background: var(--gold); color: var(--navy); font-weight: 700; }
-  .nav-right {
-    color: rgba(255,255,255,0.5);
-    font-size: 12px;
-  }
+.page { display: none; }
+.page.active { display: block; }
 
-  /* ── PAGES ── */
-  .page { display: none; }
-  .page.active { display: block; }
+.setup-header { background: linear-gradient(135deg, var(--navy) 0%, #1a3060 100%); color: var(--white); padding: 48px 24px 40px; text-align: center; }
+.setup-header h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+.setup-header p { color: rgba(255,255,255,0.65); font-size: 15px; max-width: 480px; margin: 0 auto; line-height: 1.6; }
+.setup-header .gold { color: var(--gold); }
+.setup-body { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
 
-  /* ── SETUP PAGE ── */
-  .setup-header {
-    background: linear-gradient(135deg, var(--navy) 0%, #1a3060 100%);
-    color: var(--white);
-    padding: 48px 24px 40px;
-    text-align: center;
-  }
-  .setup-header h1 {
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 8px;
-  }
-  .setup-header p {
-    color: rgba(255,255,255,0.65);
-    font-size: 15px;
-    max-width: 480px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-  .setup-header .gold { color: var(--gold); }
+.card { background: var(--white); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 24px; }
+.card-header {
+  background: var(--off); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center;
+  gap: 10px; font-weight: 700; font-size: 14px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.5px; flex-wrap: wrap;
+}
+.card-header .icon { width: 28px; height: 28px; background: var(--navy); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.card-body { padding: 24px; }
 
-  .setup-body {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 32px 24px;
-  }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.form-row.single { grid-template-columns: 1fr; }
+label { display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+input, select {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+  font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text); background: var(--white); transition: border-color 0.2s; outline: none;
+}
+input:focus, select:focus { border-color: var(--navy); }
+input::placeholder { color: #9CA3AF; }
 
-  .card {
-    background: var(--white);
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-  .card-header {
-    background: var(--off-white);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--navy);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .card-header .icon {
-    width: 28px; height: 28px;
-    background: var(--navy);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-  }
-  .card-body { padding: 24px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; }
+.btn-primary { background: var(--navy); color: var(--white); }
+.btn-primary:hover { background: #162547; transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold:hover { background: var(--gold2); transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--navy); border: 1.5px solid var(--border); }
+.btn-ghost:hover { border-color: var(--navy); background: var(--off); }
+.btn-sm { padding: 7px 14px; font-size: 13px; }
+.btn-danger { background: var(--red); color: var(--white); }
 
-  /* form */
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  .form-row.single { grid-template-columns: 1fr; }
-  label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--navy);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-  input, select {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    background: var(--white);
-    transition: border-color 0.2s;
-    outline: none;
-  }
-  input:focus, select:focus { border-color: var(--navy); }
-  input::placeholder { color: #9CA3AF; }
+.staff-table { width: 100%; border-collapse: collapse; }
+.staff-table th { text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); padding: 10px 16px; background: var(--off); border-bottom: 1px solid var(--border); }
+.staff-table td { padding: 12px 16px; border-bottom: 1px solid var(--gray-light); font-size: 14px; }
+.staff-table tr:last-child td { border-bottom: none; }
+.staff-table tr:hover td { background: #F9FAFB; }
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-  }
-  .btn-primary {
-    background: var(--navy);
-    color: var(--white);
-  }
-  .btn-primary:hover { background: #162547; transform: translateY(-1px); box-shadow: var(--shadow); }
-  .btn-gold {
-    background: var(--gold);
-    color: var(--navy);
-  }
-  .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
-  .btn-ghost {
-    background: transparent;
-    color: var(--navy);
-    border: 1.5px solid var(--border);
-  }
-  .btn-ghost:hover { border-color: var(--navy); background: var(--off-white); }
-  .btn-sm { padding: 7px 14px; font-size: 13px; }
-  .btn-danger { background: var(--red); color: var(--white); }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-green { background: var(--green-bg); color: #166534; }
+.badge-navy { background: #E0E7FF; color: #1e3a8a; }
+.badge-gold { background: var(--amber-bg); color: #92400E; }
+.badge-late { background: var(--red-bg); color: #991B1B; }
 
-  /* staff list */
-  .staff-table { width: 100%; border-collapse: collapse; }
-  .staff-table th {
-    text-align: left;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--gray);
-    padding: 10px 16px;
-    background: var(--off-white);
-    border-bottom: 1px solid var(--border);
-  }
-  .staff-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--gray-light);
-    font-size: 14px;
-  }
-  .staff-table tr:last-child td { border-bottom: none; }
-  .staff-table tr:hover td { background: #F9FAFB; }
+.rqr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-top: 12px; }
+.rqr-card { border: 2px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--white); position: relative; }
+.rqr-card:hover { border-color: var(--gold); }
+.rqr-card.active { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+.rqr-card .rqr-num { font-size: 11px; font-weight: 700; color: var(--gray); margin-bottom: 6px; }
+.rqr-card.active .rqr-num { color: var(--green); }
+.rqr-active-badge { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+#rqrTimer { font-size: 13px; font-weight: 700; color: var(--navy); background: #EFF6FF; border-radius: 8px; padding: 6px 14px; display: inline-block; margin-top: 8px; }
+#rqrTimer.warn { background: var(--amber-bg); color: #92400E; }
+#rqrTimer.danger { background: var(--red-bg); color: var(--red); }
 
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .badge-green { background: #DCFCE7; color: #166534; }
-  .badge-navy { background: #E0E7FF; color: #1e3a8a; }
-  .badge-gold { background: #FEF3C7; color: #92400E; }
+.logs-header { background: var(--navy); padding: 32px 24px 24px; color: var(--white); }
+.logs-header h2 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+.logs-header p { color: rgba(255,255,255,0.6); font-size: 13px; }
+.logs-controls { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.logs-controls input, .logs-controls select { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: var(--white); flex: 1; min-width: 160px; }
+.logs-controls input::placeholder { color: rgba(255,255,255,0.4); }
+.logs-controls select option { background: var(--navy); }
+.logs-body { max-width: 960px; margin: 0 auto; padding: 24px; }
 
-  /* qr preview */
-  .qr-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-    margin-top: 8px;
-  }
-  .qr-card {
-    background: var(--white);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-    transition: all 0.2s;
-    cursor: pointer;
-  }
-  .qr-card:hover { border-color: var(--gold); box-shadow: 0 4px 12px rgba(245,166,35,0.15); }
-  .qr-card canvas, .qr-card img { display: block; margin: 0 auto 8px; border-radius: 4px; }
-  .qr-card .qr-name { font-size: 12px; font-weight: 700; color: var(--navy); }
-  .qr-card .qr-role { font-size: 11px; color: var(--gray); }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat-card { background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 18px 16px; }
+.stat-card .stat-val { font-size: 28px; font-weight: 800; color: var(--navy); line-height: 1; margin-bottom: 4px; }
+.stat-card .stat-lbl { font-size: 11px; color: var(--gray); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+.stat-card.gold .stat-val { color: var(--gold); }
+.stat-card.green .stat-val { color: var(--green); }
+.stat-card.red .stat-val { color: var(--red); }
 
-  /* ── SCAN PAGE ── */
-  .scan-hero {
-    background: var(--navy);
-    min-height: calc(100vh - 64px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .scan-hero::before {
-    content: '';
-    position: absolute;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
+.log-table { width: 100%; border-collapse: collapse; color: var(--text); }
+.log-table th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); padding: 10px 14px; background: var(--off); border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.log-table td { padding: 12px 14px; border-bottom: 1px solid var(--gray-light); font-size: 13px; vertical-align: middle; color: var(--text); white-space: nowrap; }
+.log-table tr:last-child td { border-bottom: none; }
+.log-table tr:hover td { background: #F9FAFB; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-dot.in { background: var(--green); } .status-dot.out { background: var(--gold); }
 
-  .scan-box {
-    position: relative;
-    width: 280px; height: 280px;
-    margin-bottom: 32px;
-  }
-  .scan-frame {
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    overflow: hidden;
-    background: #000;
-  }
-  #scanVideo {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .scan-overlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-  /* corner brackets */
-  .scan-overlay::before, .scan-overlay::after,
-  .scan-corner-bl, .scan-corner-br {
-    content: '';
-    position: absolute;
-    width: 36px; height: 36px;
-    border-color: var(--gold);
-    border-style: solid;
-  }
-  .scan-overlay::before { top: 12px; left: 12px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
-  .scan-overlay::after { top: 12px; right: 12px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
-  .scan-corner-bl { bottom: 12px; left: 12px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
-  .scan-corner-br { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+.late-report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 8px; }
+.late-staff-card { background: var(--white); border: 1.5px solid #FEE2E2; border-left: 4px solid var(--red); border-radius: 12px; padding: 16px 18px; }
+.late-staff-card .lsc-name { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+.late-staff-card .lsc-role { font-size: 12px; color: var(--gray); margin-bottom: 8px; }
+.late-staff-card .lsc-count { display: inline-block; background: #FEE2E2; color: #991B1B; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
 
-  .scan-line {
-    position: absolute;
-    left: 12px; right: 12px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    top: 12px;
-    animation: scanLine 2.5s ease-in-out infinite;
-    box-shadow: 0 0 8px var(--gold);
-  }
-  @keyframes scanLine {
-    0% { top: 12px; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { top: calc(100% - 14px); opacity: 0; }
-  }
+.empty-state { text-align: center; padding: 64px 24px; color: var(--gray); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
 
-  .scan-label {
-    color: rgba(255,255,255,0.7);
-    font-size: 13px;
-    text-align: center;
-    margin-bottom: 24px;
-  }
-  .scan-label strong { color: var(--gold); display: block; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.admin-body { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
+.live-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--green-bg); color: #166534; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-left: 8px; }
+.live-badge .live-dot { width: 6px; height: 6px; background: #16A34A; border-radius: 50%; animation: pulse 1.5s infinite; }
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
-  .scan-btn-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+.notice { background: var(--amber-bg); border: 1.5px solid #FCD34D; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #78350F; margin-bottom: 16px; line-height: 1.6; }
+.notice strong { display: block; margin-bottom: 2px; font-weight: 700; }
 
-  /* ── RESULT TOAST ── */
-  #toast {
-    position: fixed;
-    bottom: 32px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--white);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    padding: 20px 28px;
-    min-width: 300px;
-    text-align: center;
-    z-index: 1000;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); }
-  #toast.success { border-top: 4px solid var(--green); }
-  #toast.error { border-top: 4px solid var(--red); }
-  #toast.duplicate { border-top: 4px solid var(--gold); }
-  #toast .toast-icon { font-size: 36px; margin-bottom: 8px; }
-  #toast .toast-name { font-size: 20px; font-weight: 800; color: var(--navy); }
-  #toast .toast-msg { font-size: 13px; color: var(--gray); margin-top: 4px; }
+.conn-status { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 12px; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); }
+.conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray); }
+.conn-dot.connected { background: var(--green); animation: pulse 2s infinite; }
+.conn-dot.error { background: var(--red); }
 
-  /* ── LOGS PAGE ── */
-  .logs-header {
-    background: var(--navy);
-    padding: 32px 24px 24px;
-    color: var(--white);
-  }
-  .logs-header h2 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
-  .logs-header p { color: rgba(255,255,255,0.6); font-size: 13px; }
-  .logs-controls {
-    display: flex;
-    gap: 12px;
-    margin-top: 16px;
-    flex-wrap: wrap;
-  }
-  .logs-controls input, .logs-controls select {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.2);
-    color: var(--white);
-    flex: 1;
-    min-width: 160px;
-  }
-  .logs-controls input::placeholder { color: rgba(255,255,255,0.4); }
-  .logs-controls select option { background: var(--navy); }
+.admin-mgr-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.admin-mgr-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), #2a4a8a); color: white; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.admin-mgr-info { flex: 1; }
+.admin-mgr-info .amn { font-size: 14px; font-weight: 700; color: var(--navy); }
+.admin-mgr-info .amu { font-size: 12px; color: var(--gray); }
+.admin-mgr-info .amr { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 3px; }
+.amr.super { background: var(--amber-bg); color: #92400E; }
+.amr.admin { background: #EFF6FF; color: #1e40af; }
 
-  .logs-body { max-width: 960px; margin: 0 auto; padding: 24px; }
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .stat-card {
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    padding: 20px;
-  }
-  .stat-card .stat-val {
-    font-size: 32px;
-    font-weight: 800;
-    color: var(--navy);
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .stat-card .stat-lbl {
-    font-size: 12px;
-    color: var(--gray);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-  .stat-card.gold .stat-val { color: var(--gold); }
-  .stat-card.green .stat-val { color: var(--green); }
+.password-reveal { margin-top: 14px; padding: 12px 16px; background: var(--green-bg); border-radius: 10px; font-size: 13px; color: #166534; line-height: 1.6; display: none; }
+.password-reveal code { background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
 
-  .log-table { width: 100%; border-collapse: collapse; }
-  .log-table th {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.5px; color: var(--gray);
-    padding: 10px 16px; background: var(--off-white);
-    border-bottom: 1px solid var(--border); text-align: left;
-  }
-  .log-table td {
-    padding: 13px 16px; border-bottom: 1px solid var(--gray-light);
-    font-size: 14px; vertical-align: middle;
-  }
-  .log-table tr:last-child td { border-bottom: none; }
-  .log-table tr:hover td { background: #F9FAFB; }
+@media (max-width: 640px) {
+  .form-row, .config-grid { grid-template-columns: 1fr; }
+  .nav-tabs { gap: 0; } .nav-tab { padding: 6px 7px; font-size: 11px; }
+  .setup-body, .logs-body, .admin-body { padding: 16px 12px; }
+  .card-header { font-size: 12px; padding: 12px 14px; gap: 8px; }
+  .card-body { padding: 14px; }
+  .logs-controls { flex-direction: column; }
+  .logs-controls input, .logs-controls select { min-width: unset; width: 100%; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .log-table { font-size: 12px; }
+  .log-table th, .log-table td { padding: 8px 10px; }
+  .staff-table th, .staff-table td { padding: 8px 10px; font-size: 12px; }
+  .btn { font-size: 12px; padding: 10px 14px; } .btn-sm { font-size: 11px; padding: 6px 10px; }
+  .setup-header h1 { font-size: 22px; } .setup-header p { font-size: 13px; }
+  nav { padding: 0 12px; height: 56px; } .nav-brand span { font-size: 15px; } .nav-right { display: none; }
+  .rqr-grid { grid-template-columns: repeat(3, 1fr); }
+}
 
-  .status-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-  }
-  /* ── LATE BADGE ── */
-  .badge-late { background: #FEE2E2; color: #991B1B; }
-  .badge-late-warn { background: #FEF3C7; color: #92400E; }
+#toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: var(--white); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 20px 28px;
+  min-width: 300px; text-align: center; z-index: 1000; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.success { border-top: 4px solid var(--green); }
+#toast.error { border-top: 4px solid var(--red); }
+#toast.duplicate { border-top: 4px solid var(--gold); }
+#toast .toast-icon { font-size: 36px; margin-bottom: 8px; }
+#toast .toast-name { font-size: 20px; font-weight: 800; color: var(--navy); }
+#toast .toast-msg { font-size: 13px; color: var(--gray); margin-top: 4px; }
 
-  /* ── RECORDS TABLE — ensure text always visible ── */
-  .log-table { width: 100%; border-collapse: collapse; color: var(--text); }
-  .log-table th {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.5px; color: var(--gray);
-    padding: 10px 14px; background: var(--off-white);
-    border-bottom: 1px solid var(--border); text-align: left;
-    white-space: nowrap;
-  }
-  .log-table td {
-    padding: 12px 14px; border-bottom: 1px solid var(--gray-light);
-    font-size: 13px; vertical-align: middle; color: var(--text);
-    white-space: nowrap;
-  }
-  .log-table tr:last-child td { border-bottom: none; }
-  .log-table tr:hover td { background: #F9FAFB; }
+/* ══════════════════════════ STAFF APP (individual login, no more picker/PIN) ══════════════════════════ */
+#staffApp { display: none; }
+#staffApp.active { display: block; }
+#staffApp .screen { display: none; width: 100%; height: 100vh; position: fixed; inset: 0; }
+#staffApp .screen.active { display: flex; flex-direction: column; }
 
-  /* ── STATS ROW ── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .stat-card {
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    padding: 18px 16px;
-  }
-  .stat-card .stat-val {
-    font-size: 28px; font-weight: 800; color: var(--navy);
-    line-height: 1; margin-bottom: 4px;
-  }
-  .stat-card .stat-lbl {
-    font-size: 11px; color: var(--gray); font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.4px;
-  }
-  .stat-card.gold .stat-val { color: var(--gold); }
-  .stat-card.green .stat-val { color: var(--green); }
-  .stat-card.red .stat-val { color: var(--red); }
+#screen-shome {
+  background: linear-gradient(160deg, #0F1C3F 0%, #1a3060 60%, #0d1830 100%);
+  align-items: center; justify-content: center; padding: 24px; text-align: center; position: relative; overflow: hidden; color: var(--white);
+}
+#screen-shome::before { content: ''; position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(245,166,35,0.07) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.shome-name { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; position: relative; }
+.shome-avatar { width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, var(--navy) 0%, #2a4a8a 100%); border: 3px solid rgba(245,166,35,0.4); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; margin: 0 auto 20px; }
+.shome-title { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
+.shome-clock { font-size: 38px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+.shome-date { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 28px; font-weight: 500; }
+.shome-status-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 18px 24px; margin-bottom: 28px; min-width: 260px; }
+.shome-status-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; }
+.shome-status-row .lbl { color: rgba(255,255,255,0.5); }
+.shome-status-row .val { font-weight: 700; }
+.shome-status-row .val.pending { color: rgba(255,255,255,0.4); }
+.shome-status-row .val.done { color: #4ade80; }
+.btn-scan {
+  display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--gold); color: var(--navy);
+  border: none; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800;
+  padding: 18px 40px; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(245,166,35,0.35); position: relative; width: 100%; max-width: 320px;
+}
+.btn-scan:active { transform: scale(0.97); }
+.btn-scan:hover { background: var(--gold2); }
+.btn-scan:disabled { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.4); box-shadow: none; cursor: not-allowed; }
+.shome-logout { margin-top: 20px; background: none; border: none; color: rgba(255,255,255,0.35); font-size: 12px; cursor: pointer; text-decoration: underline; }
 
-  /* ── LATE REPORT CARD ── */
-  .late-report-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
-    margin-top: 8px;
-  }
-  .late-staff-card {
-    background: var(--white);
-    border: 1.5px solid #FEE2E2;
-    border-left: 4px solid var(--red);
-    border-radius: 12px;
-    padding: 16px 18px;
-  }
-  .late-staff-card .lsc-name { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
-  .late-staff-card .lsc-role { font-size: 12px; color: var(--gray); margin-bottom: 8px; }
-  .late-staff-card .lsc-count {
-    display: inline-block;
-    background: #FEE2E2; color: #991B1B;
-    font-size: 12px; font-weight: 700;
-    padding: 3px 10px; border-radius: 20px;
-  }
+#screen-sscan { background: #000; flex-direction: column; align-items: center; justify-content: space-between; padding-bottom: 32px; }
+.scan-topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); position: absolute; top: 0; left: 0; z-index: 10; }
+.scan-topbar-title { font-size: 15px; font-weight: 700; color: var(--white); }
+.btn-close-scan { background: rgba(255,255,255,0.12); border: none; color: var(--white); font-size: 18px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#sScanVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+#sScanCanvas { display: none; }
+.viewfinder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 240px; height: 240px; pointer-events: none; }
+.vf-corner { position: absolute; width: 40px; height: 40px; border-color: var(--gold); border-style: solid; }
+.vf-corner.tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.vf-corner.tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.vf-corner.bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.vf-corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+.vf-line { position: absolute; left: 4px; right: 4px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); box-shadow: 0 0 10px var(--gold); top: 4px; animation: vfScan 2.5s ease-in-out infinite; }
+@keyframes vfScan { 0% { top: 4px; opacity: 0.2; } 5% { opacity: 1; } 95% { opacity: 1; } 100% { top: calc(100% - 6px); opacity: 0.2; } }
+.scan-hint { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); border-radius: 24px; padding: 10px 20px; font-size: 13px; color: rgba(255,255,255,0.8); white-space: nowrap; border: 1px solid rgba(255,255,255,0.1); }
+.scan-bottom { position: absolute; bottom: 28px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; z-index: 10; }
+.btn-alt { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: var(--white); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 24px; cursor: pointer; backdrop-filter: blur(8px); }
 
-  .empty-state {
-    text-align: center;
-    padding: 64px 24px;
-    color: var(--gray);
-  }
-  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+#screen-ssuccess { align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--white); }
+#screen-ssuccess.type-in { background: linear-gradient(160deg, #064E3B 0%, #065F46 100%); }
+#screen-ssuccess.type-out { background: linear-gradient(160deg, #78350F 0%, #92400E 100%); }
+.success-icon { font-size: 72px; margin-bottom: 20px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+@keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.success-title { font-size: 32px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.5px; }
+.success-sub { font-size: 15px; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 300px; margin: 0 auto 32px; }
+.success-detail-card { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 20px 28px; margin-bottom: 32px; display: inline-block; min-width: 260px; }
+.success-detail-card .time-badge { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 16px; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.countdown-bar-wrap { width: 100%; max-width: 300px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 0 auto 20px; overflow: hidden; }
+.countdown-bar { height: 100%; background: rgba(255,255,255,0.5); border-radius: 2px; width: 100%; animation: drainBar var(--drain-duration, 5s) linear forwards; }
+@keyframes drainBar { from { width: 100%; } to { width: 0%; } }
+.countdown-txt { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
+.btn-done { background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.25); color: var(--white); font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; padding: 14px 36px; border-radius: 14px; cursor: pointer; }
 
-  /* ── ADMIN PAGE ── */
-  .admin-body { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
+#screen-sblocked { background: linear-gradient(160deg, #1e1e2e 0%, #2d1b4e 100%); align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--white); }
+.blocked-icon { font-size: 64px; margin-bottom: 20px; animation: popIn 0.4s both; }
+.blocked-title { font-size: 26px; font-weight: 900; margin-bottom: 10px; }
+.blocked-msg { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.7; max-width: 300px; margin: 0 auto 28px; }
+.blocked-info-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px 24px; text-align: left; max-width: 340px; width: 100%; margin: 0 auto 32px; }
+.blocked-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px; }
+.blocked-row:last-child { border-bottom: none; }
+.blocked-row .lbl { color: rgba(255,255,255,0.45); }
+.blocked-row .val { font-weight: 700; color: var(--white); }
+.blocked-row .val.green { color: #4ade80; }
+.blocked-row .val.amber { color: var(--gold); }
+.btn-blocked-ok { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.2); color: var(--white); font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; padding: 14px 40px; border-radius: 14px; cursor: pointer; }
 
-  /* ── LIVE REFRESH BADGE ── */
-  .live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: #DCFCE7;
-    color: #166534;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-left: 8px;
-  }
-  .live-badge .live-dot {
-    width: 6px; height: 6px;
-    background: #16A34A;
-    border-radius: 50%;
-    animation: pulse 1.5s infinite;
-  }
-  .config-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-  @media (max-width: 640px) {
-    .form-row, .config-grid { grid-template-columns: 1fr; }
-    .nav-tabs { gap: 0; }
-    .nav-tab { padding: 6px 7px; font-size: 11px; }
-    .scan-box { width: 240px; height: 240px; }
-    .setup-body, .logs-body, .admin-body { padding: 16px 12px; }
-    .card-header { font-size: 12px; padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
-    .card-body { padding: 14px; }
-    .logs-controls { flex-direction: column; }
-    .logs-controls input, .logs-controls select { min-width: unset; width: 100%; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .card-header span[style*="margin-left:auto"] { margin-left: 0 !important; width: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
-    .log-table { font-size: 12px; }
-    .log-table th, .log-table td { padding: 8px 10px; }
-    .staff-table th, .staff-table td { padding: 8px 10px; font-size: 12px; }
-    .btn { font-size: 12px; padding: 10px 14px; }
-    .btn-sm { font-size: 11px; padding: 6px 10px; }
-    .setup-header h1 { font-size: 22px; }
-    .setup-header p { font-size: 13px; }
-    nav { padding: 0 12px; height: 56px; }
-    .nav-brand span { font-size: 15px; }
-    .nav-right { display: none; }
-    #toast { min-width: 90vw; padding: 14px 16px; bottom: 16px; }
-  }
+.loading-overlay { position: fixed; inset: 0; background: rgba(15,28,63,0.85); backdrop-filter: blur(8px); z-index: 9500; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; color: var(--white); }
+.loading-overlay.open { display: flex; }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-txt { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); }
 
-  /* rotating QR grid */
-  .rqr-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 12px;
-    margin-top: 12px;
-  }
-  .rqr-card {
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--white);
-    position: relative;
-  }
-  .rqr-card:hover { border-color: var(--gold); }
-  .rqr-card.active {
-    border-color: var(--green);
-    box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
-  }
-  .rqr-card .rqr-num {
-    font-size: 11px; font-weight: 700; color: var(--gray);
-    margin-bottom: 6px;
-  }
-  .rqr-card.active .rqr-num { color: var(--green); }
-  .rqr-active-badge {
-    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
-    background: var(--green); color: white;
-    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
-    white-space: nowrap;
-  }
-  .rqr-expiry {
-    font-size: 10px; color: var(--gray); margin-top: 4px;
-  }
-  .rqr-expiry.expiring { color: var(--red); font-weight: 700; }
-  #rqrTimer {
-    font-size: 13px; font-weight: 700; color: var(--navy);
-    background: #EFF6FF; border-radius: 8px; padding: 6px 14px;
-    display: inline-block; margin-top: 8px;
-  }
-  #rqrTimer.warn { background: #FEF3C7; color: #92400E; }
-  #rqrTimer.danger { background: #FEE2E2; color: var(--red); }
-
-  /* report styles */
-  .report-staff-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .report-staff-card {
-    background: var(--white);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .report-staff-card:hover { border-color: var(--gold); box-shadow: 0 4px 12px rgba(245,166,35,0.15); }
-  .report-staff-card.selected { border-color: var(--navy); background: #EFF6FF; }
-  .report-staff-card .rsn { font-size: 14px; font-weight: 700; color: var(--navy); }
-  .report-staff-card .rsr { font-size: 12px; color: var(--gray); margin-top: 2px; }
-  .report-summary-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  @media (max-width: 640px) {
-    .rqr-grid { grid-template-columns: repeat(3, 1fr); }
-    .report-staff-grid { grid-template-columns: repeat(2, 1fr); }
-    .report-summary-row { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  /* modal */
-  .modal-bg {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 500;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  .modal-bg.open { display: flex; }
-  .modal {
-    background: var(--white);
-    border-radius: 20px;
-    box-shadow: var(--shadow-lg);
-    padding: 32px;
-    max-width: 420px;
-    width: 100%;
-    text-align: center;
-  }
-  .modal h3 { font-size: 20px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
-  .modal p { font-size: 14px; color: var(--gray); line-height: 1.6; margin-bottom: 24px; }
-  .modal #modalQR { margin: 0 auto 16px; display: flex; justify-content: center; }
-  .modal-btns { display: flex; gap: 12px; justify-content: center; }
-
-  .notice {
-    background: #FEF3C7;
-    border: 1.5px solid #FCD34D;
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: #78350F;
-    margin-bottom: 16px;
-    line-height: 1.6;
-  }
-  .notice strong { display: block; margin-bottom: 2px; font-weight: 700; }
-
-  .google-setup {
-    background: linear-gradient(135deg, #0F1C3F 0%, #1a3060 100%);
-    border-radius: 14px;
-    padding: 24px;
-    margin-bottom: 20px;
-    color: var(--white);
-  }
-  .google-setup h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-  .google-setup p { font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 16px; line-height: 1.6; }
-  .url-input-wrap { display: flex; gap: 8px; }
-  .url-input-wrap input { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: var(--white); flex: 1; }
-  .url-input-wrap input::placeholder { color: rgba(255,255,255,0.35); }
-
-  .conn-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    margin-top: 12px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.08);
-  }
-  .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray); }
-  .conn-dot.connected { background: var(--green); animation: pulse 2s infinite; }
-  .conn-dot.error { background: var(--red); }
-
-  /* ── LOGIN SCREEN ── */
-  #loginScreen {
-    position: fixed; inset: 0;
-    background: linear-gradient(160deg, var(--navy) 0%, #1a3060 100%);
-    z-index: 9000;
-    display: flex; align-items: center; justify-content: center;
-    padding: 24px;
-  }
-  #loginScreen.hidden { display: none; }
-  .login-card {
-    background: var(--white);
-    border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    padding: 40px 36px;
-    width: 100%; max-width: 400px;
-    text-align: center;
-  }
-  .login-logo { font-size: 48px; margin-bottom: 12px; }
-  .login-title { font-size: 24px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
-  .login-sub { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
-  .login-field { margin-bottom: 14px; text-align: left; }
-  .login-field label { display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .login-field input {
-    width: 100%; padding: 12px 14px;
-    border: 2px solid var(--border); border-radius: 10px;
-    font-family: 'Inter', sans-serif; font-size: 14px;
-    color: var(--text); outline: none; transition: border-color 0.2s;
-  }
-  .login-field input:focus { border-color: var(--navy); }
-  .login-btn {
-    width: 100%; padding: 14px;
-    background: var(--navy); color: var(--white);
-    border: none; border-radius: 10px;
-    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
-    cursor: pointer; margin-top: 4px; transition: background 0.2s;
-  }
-  .login-btn:hover { background: #162547; }
-  .login-error {
-    background: #FEE2E2; color: #991B1B;
-    border-radius: 8px; padding: 10px 14px;
-    font-size: 13px; font-weight: 600; margin-top: 12px; display: none;
-  }
-  .login-role-badge {
-    display: inline-block;
-    background: #EFF6FF; color: #1e40af;
-    font-size: 11px; font-weight: 700;
-    padding: 3px 10px; border-radius: 20px; margin-bottom: 20px;
-  }
-
-  /* ── SUPER ADMIN PANEL ── */
-  .admin-mgr-card {
-    background: var(--white);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex; align-items: center; gap: 14px;
-    margin-bottom: 10px;
-  }
-  .admin-mgr-avatar {
-    width: 42px; height: 42px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--navy), #2a4a8a);
-    color: white; font-weight: 700; font-size: 16px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .admin-mgr-info { flex: 1; }
-  .admin-mgr-info .amn { font-size: 14px; font-weight: 700; color: var(--navy); }
-  .admin-mgr-info .amu { font-size: 12px; color: var(--gray); }
-  .admin-mgr-info .amr { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 3px; }
-  .amr.super { background: #FEF3C7; color: #92400E; }
-  .amr.admin { background: #EFF6FF; color: #1e40af; }
+.google-setup { background: linear-gradient(135deg, #0F1C3F 0%, #1a3060 100%); border-radius: 14px; padding: 24px; margin-bottom: 20px; color: var(--white); }
+.google-setup h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.google-setup p { font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 16px; line-height: 1.6; }
+.url-input-wrap { display: flex; gap: 8px; }
+.url-input-wrap input { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: var(--white); flex: 1; }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════
-     LOGIN SCREEN
-══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════
+     LOADING OVERLAY
+══════════════════════════════════════════ -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loadingTxt">Connecting…</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SHARED LOGIN SCREEN — admin and staff both sign in here
+══════════════════════════════════════════ -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-logo">🏫</div>
     <div class="login-title">StaffTrack</div>
-    <div class="login-sub">Admin Portal — Sign in to continue</div>
-    <div class="login-role-badge" id="loginRoleBadge">Admin Login</div>
+    <div class="login-sub">Sign in with your admin or staff account</div>
     <div class="login-field">
-      <label>Username</label>
-      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <label>Username / Staff ID</label>
+      <input type="text" id="loginUser" placeholder="e.g. admin or STF-001" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/>
     </div>
     <div class="login-field">
       <label>Password</label>
       <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
     </div>
     <button class="login-btn" onclick="doLogin()">Sign In →</button>
-    <div class="login-error" id="loginError">Incorrect username or password.</div>
+    <div class="login-error" id="loginError">Incorrect username/ID or password.</div>
+    <div class="login-reveal" id="loginReveal"></div>
+    <div class="login-hint">Staff: use the Staff ID and password your admin gave you.<br>Admin: use your admin username and password.</div>
   </div>
 </div>
 
-<!-- NAV -->
+<!-- ══════════════════════════════════════════════════════════════
+     ADMIN APP
+═══════════════════════════════════════════════════════════════ -->
+<div id="adminApp">
+
 <nav>
-  <div class="nav-brand">
-    <div class="dot"></div>
-    StaffTrack
-  </div>
+  <div class="nav-brand"><div class="dot"></div>StaffTrack</div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('setup')">⚙️ Setup</button>
-    <button class="nav-tab" onclick="showPage('scan')">📷 Scan</button>
     <button class="nav-tab" onclick="showPage('logs')">📋 Records</button>
-    <button class="nav-tab" onclick="showPage('reports')">📊 Reports</button>
     <button class="nav-tab" onclick="showPage('security')">🔐 Security</button>
     <button class="nav-tab" onclick="showPage('admin')">🔧 Admin</button>
     <button class="nav-tab" id="superAdminTab" style="display:none" onclick="showPage('superadmin')">👑 Super Admin</button>
   </div>
-  <div class="nav-right" style="display:flex;align-items:center;gap:10px;">
+  <div class="nav-right">
     <span id="clockDisplay"></span>
     <span id="loggedInAs" style="color:rgba(255,255,255,0.5);font-size:11px;"></span>
     <button onclick="doLogout()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;">Sign Out</button>
   </div>
 </nav>
 
-<!-- ══════════════════════════════════════════════
-     PAGE: SETUP
-══════════════════════════════════════════════ -->
+<!-- PAGE: SETUP -->
 <div id="page-setup" class="page active">
   <div class="setup-header">
     <h1>QR <span class="gold">Attendance</span> System</h1>
-    <p>One shared QR code for all staff. Each staff member scans it, selects their name and enters their PIN. Every sign-in is logged to your Google Sheet.</p>
+    <p>Each staff member logs into this same page with their own Staff ID and password, then confirms with the on-site QR code to sign in or out.</p>
   </div>
   <div class="setup-body">
 
     <div class="notice" style="background:#EFF6FF; border-color:#93C5FD; color:#1e3a8a;">
-      <strong>🔗 Staff Sign-In Portal</strong>
-      Open on a kiosk device or share the link with staff. They scan the School QR, pick their name and enter their PIN.
-      <span style="display:block;margin-top:6px"><a href="staffportal.html" id="staffPortalLink" target="_blank" style="color:#2563EB;font-weight:700;">→ Open Staff Sign-In Portal</a></span>
+      <strong>🔗 One shared link for everyone</strong>
+      Staff open this exact page and log in with their own Staff ID + password — no separate portal link needed anymore.
     </div>
 
-    <!-- School QR Code -->
     <div class="card">
       <div class="card-header"><div class="icon">🔐</div> Rotating QR Security</div>
       <div class="card-body">
-        <p style="color:var(--gray);font-size:13px;margin-bottom:16px;">Generate multiple QR codes. Click one to make it <strong>active</strong> — only that code works on the portal. Rotate regularly to prevent staff sharing the QR. Codes auto-expire.</p>
+        <p style="color:var(--gray);font-size:13px;margin-bottom:16px;">Generate multiple QR codes. Click one to make it <strong>active</strong> — only that code works for staff to confirm they're on-site. Codes auto-expire.</p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
           <label style="font-size:12px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.4px">Expire after</label>
           <select id="rqrExpiry" style="width:auto;padding:6px 10px;font-size:13px;" onchange="saveRqrSettings()">
@@ -879,118 +415,57 @@
           <button class="btn btn-primary btn-sm" onclick="generateRotatingQRs()">🔄 Generate New QR Set</button>
           <button class="btn btn-ghost btn-sm" onclick="printActiveQR()">🖨️ Print Active QR</button>
         </div>
-        <div id="rqrTimerWrap" style="margin-bottom:12px;display:none;">
-          Active QR expires in: <span id="rqrTimer">—</span>
-        </div>
-        <!-- Active token shown large so staff can type it on the portal -->
+        <div id="rqrTimerWrap" style="margin-bottom:12px;display:none;">Active QR expires in: <span id="rqrTimer">—</span></div>
         <div id="activeTokenDisplay" style="display:none;margin-bottom:16px;background:#0F1C3F;border-radius:12px;padding:16px 20px;text-align:center;">
-          <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Active Token — Staff can type this on the portal</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Active Token — staff can type this if they can't scan</div>
           <div id="activeTokenText" style="font-size:28px;font-weight:900;color:#F5A623;letter-spacing:4px;font-family:monospace;"></div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:6px;">If camera doesn't work, staff tap "Can't scan?" and type this code</div>
         </div>
         <div id="rqrGrid" class="rqr-grid"></div>
       </div>
     </div>
 
-    <!-- Add Staff -->
     <div class="card">
       <div class="card-header"><div class="icon">👤</div> Add Staff Member</div>
       <div class="card-body">
         <div class="form-row">
-          <div>
-            <label>Full Name</label>
-            <input type="text" id="staffName" placeholder="e.g. Adunola Bello"/>
-          </div>
-          <div>
-            <label>Staff ID</label>
-            <input type="text" id="staffId" placeholder="e.g. STF-001"/>
-          </div>
+          <div><label>Full Name</label><input type="text" id="staffName" placeholder="e.g. Adunola Bello"/></div>
+          <div><label>Staff ID (used as their login)</label><input type="text" id="staffId" placeholder="e.g. STF-001"/></div>
         </div>
         <div class="form-row">
           <div>
             <label>Department</label>
             <select id="staffDept">
               <option value="">Select department</option>
-              <option>Administration</option>
-              <option>Teaching – Primary</option>
-              <option>Teaching – Secondary</option>
-              <option>Teaching – Nursery</option>
-              <option>ICT Department</option>
-              <option>Library</option>
-              <option>Security</option>
-              <option>Cleaning & Maintenance</option>
-              <option>Kitchen & Catering</option>
-              <option>Accounts & Finance</option>
-              <option>Sports & P.E.</option>
+              <option>Administration</option><option>Teaching – Primary</option><option>Teaching – Secondary</option>
+              <option>Teaching – Nursery</option><option>ICT Department</option><option>Library</option><option>Security</option>
+              <option>Cleaning &amp; Maintenance</option><option>Kitchen &amp; Catering</option><option>Accounts &amp; Finance</option><option>Sports &amp; P.E.</option>
             </select>
           </div>
-          <div>
-            <label>Role / Position</label>
-            <input type="text" id="staffRole" placeholder="e.g. Class Teacher"/>
-          </div>
+          <div><label>Role / Position</label><input type="text" id="staffRole" placeholder="e.g. Class Teacher"/></div>
+        </div>
+        <div class="form-row single">
+          <div><label>Login Password (min 4 characters, shared with the staff member)</label><input type="text" id="staffPassword" placeholder="e.g. a temporary password"/></div>
         </div>
         <div style="display:flex; gap:12px; flex-wrap:wrap">
           <button class="btn btn-primary" onclick="addStaff()">➕ Add Staff</button>
           <button class="btn btn-ghost" onclick="clearStaffForm()">✕ Clear</button>
         </div>
+        <div class="password-reveal" id="staffPasswordReveal"></div>
       </div>
     </div>
 
-    <!-- Staff List -->
     <div class="card">
       <div class="card-header">
         <div class="icon">📋</div> Registered Staff
-        <span style="margin-left:auto; display:flex; gap:8px;">
-          <button class="btn btn-ghost btn-sm" onclick="exportStaffCSV()">📥 Export CSV</button>
-        </span>
+        <span style="margin-left:auto; display:flex; gap:8px;"><button class="btn btn-ghost btn-sm" onclick="exportStaffCSV()">📥 Export CSV</button></span>
       </div>
-      <div class="card-body" style="padding:0;">
-        <div id="staffListWrap">
-          <div class="empty-state">
-            <div class="empty-icon">👥</div>
-            <h3>No staff added yet</h3>
-            <p>Use the form above to add staff members.</p>
-          </div>
-        </div>
-      </div>
+      <div class="card-body" style="padding:0;"><div id="staffListWrap"><div class="empty-state"><div class="empty-icon">👥</div><h3>No staff added yet</h3><p>Use the form above to add staff members.</p></div></div></div>
     </div>
 
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     PAGE: SCAN
-══════════════════════════════════════════════ -->
-<div id="page-scan" class="page">
-  <div class="scan-hero">
-    <div class="scan-label">
-      <strong>Point Camera at QR Code</strong>
-      Attendance is logged automatically
-    </div>
-    <div class="scan-box">
-      <div class="scan-frame">
-        <video id="scanVideo" autoplay muted playsinline></video>
-        <canvas id="scanCanvas" style="display:none"></canvas>
-      </div>
-      <div class="scan-overlay"></div>
-      <div class="scan-corner-bl"></div>
-      <div class="scan-corner-br"></div>
-      <div class="scan-line" id="scanLine"></div>
-    </div>
-    <div class="scan-btn-row">
-      <button class="btn btn-gold" onclick="startCamera()" id="startCamBtn">📷 Start Camera</button>
-      <button class="btn btn-ghost" style="color:white;border-color:rgba(255,255,255,0.3)" onclick="stopCamera()" id="stopCamBtn" style="display:none">⏹ Stop</button>
-      <button class="btn btn-ghost" style="color:white;border-color:rgba(255,255,255,0.3)" onclick="manualScan()">⌨️ Manual ID</button>
-    </div>
-    <p style="color:rgba(255,255,255,0.35); font-size:12px; margin-top:20px; text-align:center; max-width:300px; line-height:1.6;">
-      🌅 First scan = Morning Sign-In &nbsp;·&nbsp; 🌆 Second scan = Afternoon Sign-Out.
-    </p>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════
-     PAGE: LOGS
-══════════════════════════════════════════════ -->
+<!-- PAGE: LOGS -->
 <div id="page-logs" class="page">
   <div class="logs-header">
     <h2>📋 Attendance Records</h2>
@@ -998,277 +473,195 @@
     <div class="logs-controls">
       <input type="text" id="logSearch" placeholder="Search name or ID…" oninput="renderLogs()"/>
       <input type="date" id="logDate" onchange="renderLogs()"/>
-      <select id="logFilter" onchange="renderLogs()">
-        <option value="">All Status</option>
-        <option value="IN">Sign-In</option>
-        <option value="OUT">Sign-Out</option>
-      </select>
-      <select id="logSource" onchange="renderLogs()">
-        <option value="">All Sources</option>
-        <option value="self-signin">Self Sign-In</option>
-        <option value="admin-scan">Admin Scan</option>
-      </select>
+      <select id="logFilter" onchange="renderLogs()"><option value="">All Status</option><option value="IN">Sign-In</option><option value="OUT">Sign-Out</option></select>
       <button class="btn btn-gold btn-sm" onclick="clearTodayLogs()">🗑 Clear Today</button>
     </div>
   </div>
   <div class="logs-body">
     <div class="stats-row" id="statsRow"></div>
-
-    <!-- Late Arrivals Today -->
     <div class="card" id="lateReportCard" style="display:none;margin-bottom:20px;">
       <div class="card-header" style="background:#FEF2F2;border-color:#FECACA;">
         <div class="icon" style="background:#DC2626">⚠️</div>
         <span style="color:#991B1B;font-weight:700;">Late Arrivals Today</span>
         <span id="lateCountBadge" style="margin-left:8px;background:#DC2626;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;"></span>
       </div>
-      <div class="card-body" style="padding:0;overflow-x:auto;">
-        <div id="lateTableWrap"></div>
-      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto;"><div id="lateTableWrap"></div></div>
     </div>
-
     <div class="card">
       <div class="card-header">
-        <div class="icon">📊</div> Today's Attendance
-        <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+        <div class="icon">📊</div> Today's Attendance <span class="live-badge"><span class="live-dot"></span> LIVE</span>
         <span style="margin-left:auto; display:flex; gap:8px;">
           <button class="btn btn-ghost btn-sm" onclick="renderLogs()">🔄 Refresh</button>
           <button class="btn btn-ghost btn-sm" onclick="exportLogsCSV()">📥 Export CSV</button>
           <button class="btn btn-primary btn-sm" onclick="syncToSheets()">☁️ Sync to Sheets</button>
         </span>
       </div>
-      <div class="card-body" style="padding:0; overflow-x:auto;">
-        <div id="logsTableWrap"></div>
-      </div>
+      <div class="card-body" style="padding:0; overflow-x:auto;"><div id="logsTableWrap"></div></div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     PAGE: ADMIN
-══════════════════════════════════════════════ -->
+<!-- PAGE: ADMIN SETTINGS -->
 <div id="page-admin" class="page">
-  <div class="logs-header">
-    <h2>🔧 Admin Settings</h2>
-    <p>Manage school configuration and attendance rules.</p>
-  </div>
+  <div class="logs-header"><h2>🔧 Admin Settings</h2><p>Manage school configuration and attendance rules.</p></div>
   <div class="admin-body">
-
     <div class="config-grid">
       <div class="card">
         <div class="card-header"><div class="icon">🏫</div> School Info</div>
         <div class="card-body">
-          <div style="margin-bottom:14px">
-            <label>School Name</label>
-            <input type="text" id="schoolName" placeholder="Victory Montessori Int'l School" value="Victory Montessori Int'l School"/>
-          </div>
-          <div style="margin-bottom:14px">
-            <label>Branch / Location</label>
-            <input type="text" id="schoolBranch" placeholder="Owode Ede Branch"/>
-          </div>
-          <div style="margin-bottom:14px">
-            <label>Academic Session</label>
-            <input type="text" id="academicSession" placeholder="2025/2026"/>
-          </div>
+          <div style="margin-bottom:14px"><label>School Name</label><input type="text" id="schoolName" placeholder="Victory Montessori Int'l School"/></div>
+          <div style="margin-bottom:14px"><label>Branch / Location</label><input type="text" id="schoolBranch" placeholder="Owode Ede Branch"/></div>
+          <div style="margin-bottom:14px"><label>Academic Session</label><input type="text" id="academicSession" placeholder="2025/2026"/></div>
           <button class="btn btn-primary" onclick="saveSchoolInfo()">Save Info</button>
         </div>
       </div>
       <div class="card">
         <div class="card-header"><div class="icon">⏰</div> Attendance Rules</div>
         <div class="card-body">
-          <div style="margin-bottom:14px">
-            <label>Resumption Time</label>
-            <input type="time" id="resumptionTime" value="07:30"/>
-          </div>
-          <div style="margin-bottom:14px">
-            <label>Closing Time</label>
-            <input type="time" id="closingTime" value="15:00"/>
-          </div>
-          <div style="margin-bottom:14px">
-            <label>Late Threshold (mins after resumption)</label>
-            <input type="number" id="lateThreshold" value="15" min="0" max="120"/>
-          </div>
+          <div style="margin-bottom:14px"><label>Resumption Time</label><input type="time" id="resumptionTime" value="07:30"/></div>
+          <div style="margin-bottom:14px"><label>Closing Time</label><input type="time" id="closingTime" value="15:00"/></div>
+          <div style="margin-bottom:14px"><label>Late Threshold (mins after resumption)</label><input type="number" id="lateThreshold" value="15" min="0" max="120"/></div>
           <button class="btn btn-primary" onclick="saveAttendanceRules()">Save Rules</button>
         </div>
       </div>
     </div>
-
+    <div class="google-setup">
+      <h3>☁️ Cloud Sync (Google Sheets)</h3>
+      <p>All staff, logs and settings sync through this Google Apps Script URL so every device (admin and staff) sees the same live data.</p>
+      <div class="url-input-wrap">
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/…/exec"/>
+        <button class="btn btn-gold" onclick="saveScriptUrl()">Save &amp; Sync</button>
+      </div>
+      <div class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not configured</span></div>
+      <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="testConnection()" style="background:rgba(255,255,255,0.1);color:white;border-color:rgba(255,255,255,0.25)">🔁 Test Connection</button></div>
+    </div>
     <div class="card">
       <div class="card-header"><div class="icon">🗄️</div> Data Management</div>
       <div class="card-body" style="display:flex; gap:12px; flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="exportAllData()">📥 Export All Data</button>
         <button class="btn btn-ghost" onclick="importData()">📤 Import Staff List</button>
-        <button class="btn btn-ghost" onclick="testConnection()">🔁 Test Sheet Connection</button>
         <button class="btn btn-danger btn-sm" onclick="confirmReset()">⚠️ Reset All Data</button>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     PAGE: REPORTS
-══════════════════════════════════════════════ -->
-<div id="page-reports" class="page">
-  <div class="logs-header">
-    <h2>📊 Monthly Reports</h2>
-    <p>Generate attendance reports for any month — individual staff or all staff.</p>
-    <div class="logs-controls" style="margin-top:16px;flex-wrap:wrap;">
-      <select id="reportMonth" style="flex:0 0 auto;min-width:140px;">
-      </select>
-      <select id="reportYear" style="flex:0 0 auto;min-width:100px;"></select>
-      <select id="reportStaff" style="flex:1;min-width:160px;">
-        <option value="">All Staff</option>
-      </select>
-      <button class="btn btn-gold btn-sm" onclick="generateReport()">📊 Generate Report</button>
-      <button class="btn btn-ghost btn-sm" onclick="exportReportCSV()">📥 Export CSV</button>
-      <button class="btn btn-primary btn-sm" onclick="printReport()">🖨️ Print Report</button>
-    </div>
-  </div>
-  <div class="logs-body">
-    <!-- Late Arrivals Report -->
-    <div class="card" style="margin-bottom:20px;">
-      <div class="card-header" style="background:#FEF2F2;border-color:#FECACA;">
-        <div class="icon" style="background:#DC2626">⚠️</div>
-        <span style="color:#991B1B;font-weight:700;">Staff Late Arrival Report</span>
-        <span style="margin-left:auto">
-          <button class="btn btn-ghost btn-sm" onclick="renderLateReport()">🔄 Refresh</button>
-        </span>
-      </div>
-      <div class="card-body" style="padding:16px">
-        <div id="lateReportOutput">
-          <div class="empty-state" style="padding:32px"><div class="empty-icon">⏳</div><h3>Click Refresh to load</h3></div>
-        </div>
-      </div>
-    </div>
-    <div id="reportOutput">
-      <div class="empty-state">
-        <div class="empty-icon">📊</div>
-        <h3>Select a month and click Generate</h3>
-        <p>Reports show attendance for each working day in the selected month.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════
-     PAGE: SUPER ADMIN
-══════════════════════════════════════════════ -->
+<!-- PAGE: SUPER ADMIN -->
 <div id="page-superadmin" class="page">
-  <div class="logs-header">
-    <h2>👑 Super Admin</h2>
-    <p>Manage admin accounts and system access.</p>
-  </div>
+  <div class="logs-header"><h2>👑 Super Admin</h2><p>Manage admin accounts and system access.</p></div>
   <div class="admin-body">
     <div class="card">
       <div class="card-header"><div class="icon">➕</div> Add Admin Account</div>
       <div class="card-body">
         <div class="form-row">
-          <div>
-            <label>Full Name</label>
-            <input type="text" id="newAdminName" placeholder="e.g. Mrs. Adebayo"/>
-          </div>
-          <div>
-            <label>Username</label>
-            <input type="text" id="newAdminUser" placeholder="e.g. adebayo"/>
-          </div>
+          <div><label>Full Name</label><input type="text" id="newAdminName" placeholder="e.g. Mrs. Adebayo"/></div>
+          <div><label>Username</label><input type="text" id="newAdminUser" placeholder="e.g. adebayo"/></div>
         </div>
         <div class="form-row">
-          <div>
-            <label>Password</label>
-            <input type="password" id="newAdminPass" placeholder="Choose a password"/>
-          </div>
-          <div>
-            <label>Role</label>
-            <select id="newAdminRole">
-              <option value="admin">Admin</option>
-              <option value="superadmin">Super Admin</option>
-            </select>
-          </div>
+          <div><label>Password</label><input type="password" id="newAdminPass" placeholder="Choose a password"/></div>
+          <div><label>Role</label><select id="newAdminRole"><option value="admin">Admin</option><option value="superadmin">Super Admin</option></select></div>
         </div>
         <button class="btn btn-primary" onclick="addAdminAccount()">➕ Add Account</button>
       </div>
     </div>
     <div class="card">
       <div class="card-header"><div class="icon">👤</div> Admin Accounts</div>
-      <div class="card-body" style="padding:0">
-        <div id="adminListWrap"></div>
-      </div>
+      <div class="card-body" style="padding:0"><div id="adminListWrap"></div></div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     PAGE: SECURITY
-══════════════════════════════════════════════ -->
+<!-- PAGE: SECURITY -->
 <div id="page-security" class="page">
-  <div class="logs-header">
-    <h2>🔐 Security &amp; PIN Management</h2>
-    <p>Monitor device sessions, manage staff PINs, and review fraud prevention logs.</p>
-  </div>
+  <div class="logs-header"><h2>🔐 Security</h2><p>Review staff login/password status and today's self sign-in activity.</p></div>
   <div class="admin-body">
-
-    <!-- Device Sessions -->
     <div class="card">
-      <div class="card-header">
-        <div class="icon">📱</div> Active Device Sessions
-        <span style="margin-left:auto">
-          <button class="btn btn-danger btn-sm" onclick="clearAllDeviceSessions()">🗑 Clear All Sessions</button>
-        </span>
+      <div class="card-header"><div class="icon">🔑</div> Staff Login Status
+        <span style="margin-left:auto"></span>
       </div>
-      <div class="card-body" style="padding:0">
-        <div id="deviceSessionsWrap"></div>
-      </div>
+      <div class="card-body" style="padding:0"><div id="pinStatusWrap"></div></div>
     </div>
-
-    <!-- PIN Status -->
-    <div class="card">
-      <div class="card-header">
-        <div class="icon">🔑</div> Staff PIN Status
-        <span style="margin-left:auto">
-          <button class="btn btn-ghost btn-sm" onclick="clearAllPINs()">⚠️ Reset All PINs</button>
-        </span>
-      </div>
-      <div class="card-body" style="padding:0">
-        <div id="pinStatusWrap"></div>
-      </div>
-    </div>
-
-    <!-- Today's Self-Signin Log -->
     <div class="card">
       <div class="card-header"><div class="icon">🧾</div> Today's Self Sign-In Activity</div>
-      <div class="card-body" style="padding:0; overflow-x:auto">
-        <div id="selfSigninLogWrap"></div>
+      <div class="card-body" style="padding:0; overflow-x:auto"><div id="selfSigninLogWrap"></div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#adminApp -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     STAFF APP — logged-in staff member's own attendance screen
+═══════════════════════════════════════════════════════════════ -->
+<div id="staffApp">
+
+  <!-- SCREEN: personal home / status -->
+  <div class="screen active" id="screen-shome">
+    <div class="shome-name" id="shomeSchool">StaffTrack</div>
+    <div class="shome-avatar" id="shomeAvatar">👤</div>
+    <div class="shome-title">Hi, <span id="shomeName" style="color:var(--gold)">—</span></div>
+    <div class="shome-clock" id="shomeClock">00:00</div>
+    <div class="shome-date" id="shomeDate">—</div>
+
+    <div class="shome-status-card">
+      <div class="shome-status-row"><span class="lbl">Morning Sign-In</span><span class="val" id="shomeInStatus">—</span></div>
+      <div class="shome-status-row"><span class="lbl">Afternoon Sign-Out</span><span class="val" id="shomeOutStatus">—</span></div>
+    </div>
+
+    <button class="btn-scan" onclick="openStaffScanner()" id="btnStaffAction">📷 Confirm On-Site to Sign In</button>
+    <div id="staffTokenEntryWrap" style="display:none;margin-top:16px;text-align:center;width:100%;max-width:320px;">
+      <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:10px;">— or enter the token shown by admin —</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <input id="staffTokenInput" type="text" placeholder="e.g. RQR-ABC123"
+          style="flex:1;padding:12px 14px;border-radius:12px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:white;font-size:14px;font-family:Inter,sans-serif;outline:none;"
+          onkeydown="if(event.key==='Enter')submitStaffToken()" autocomplete="off" autocorrect="off" autocapitalize="characters"/>
+        <button onclick="submitStaffToken()" style="padding:12px 18px;background:var(--gold);color:var(--navy);border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">Go</button>
       </div>
+      <div id="staffTokenError" style="color:#fca5a5;font-size:12px;margin-top:8px;display:none;">Invalid or expired token. Ask admin for the current code.</div>
     </div>
+    <div style="margin-top:14px;"><button onclick="toggleStaffTokenEntry()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;text-decoration:underline;" id="toggleStaffTokenBtn">Can't scan? Enter token instead</button></div>
 
+    <button class="shome-logout" onclick="doLogout()">Sign out of this account</button>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════
-     TOAST
-══════════════════════════════════════════════ -->
-<div id="toast">
-  <div class="toast-icon" id="toastIcon"></div>
-  <div class="toast-name" id="toastName"></div>
-  <div class="toast-msg" id="toastMsg"></div>
-</div>
-
-<!-- ══════════════════════════════════════════════
-     MODAL (QR Enlarge)
-══════════════════════════════════════════════ -->
-<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
-  <div class="modal">
-    <h3 id="modalTitle"></h3>
-    <p id="modalSub"></p>
-    <div id="modalQR"></div>
-    <div class="modal-btns">
-      <button class="btn btn-primary" onclick="printQR()">🖨️ Print QR</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('modalBg').classList.remove('open')">Close</button>
+  <!-- SCREEN: scanner -->
+  <div class="screen" id="screen-sscan">
+    <video id="sScanVideo" autoplay muted playsinline></video>
+    <canvas id="sScanCanvas"></canvas>
+    <div class="scan-topbar"><div class="scan-topbar-title">Confirm You're On-Site</div><button class="btn-close-scan" onclick="closeStaffScanner()">✕</button></div>
+    <div class="viewfinder"><div class="vf-corner tl"></div><div class="vf-corner tr"></div><div class="vf-corner bl"></div><div class="vf-corner br"></div><div class="vf-line"></div></div>
+    <div class="scan-hint" id="sScanHint">⏳ Starting camera…</div>
+    <div class="scan-bottom">
+      <button class="btn-alt" onclick="toggleStaffTokenEntry(); closeStaffScanner();">⌨️ Enter Token Instead</button>
+      <button class="btn-alt" onclick="closeStaffScanner()">✕ Cancel</button>
     </div>
   </div>
-</div>
 
-<script src="stafftrack-admin.js"></script>
+  <!-- SCREEN: success -->
+  <div class="screen" id="screen-ssuccess">
+    <div class="success-icon" id="sSuccessIcon">✅</div>
+    <div class="success-title" id="sSuccessTitle">Signed In!</div>
+    <div class="success-sub" id="sSuccessSub">Your attendance has been recorded.</div>
+    <div class="success-detail-card"><div class="time-badge" id="sSuccessTime">—</div></div>
+    <div class="countdown-bar-wrap"><div class="countdown-bar" id="sCountdownBar"></div></div>
+    <div class="countdown-txt" id="sCountdownTxt">Returning to home…</div>
+    <button class="btn-done" onclick="staffGoHome()">✓ Done</button>
+  </div>
 
+  <!-- SCREEN: blocked / already done -->
+  <div class="screen" id="screen-sblocked">
+    <div class="blocked-icon" id="sBlockedIcon">✅</div>
+    <div class="blocked-title" id="sBlockedTitle">All Done for Today!</div>
+    <div class="blocked-msg" id="sBlockedMsg">—</div>
+    <div class="blocked-info-card" id="sBlockedInfoCard"></div>
+    <button class="btn-blocked-ok" onclick="staffGoHome()">← Back</button>
+  </div>
+
+</div><!-- /#staffApp -->
+
+<!-- TOAST (admin-side notifications) -->
+<div id="toast"><div class="toast-icon" id="toastIcon"></div><div class="toast-name" id="toastName"></div><div class="toast-msg" id="toastMsg"></div></div>
+
+<script src="stafftrack-unified.js"></script>
 </body>
 </html>
