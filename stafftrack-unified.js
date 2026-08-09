@@ -310,7 +310,9 @@ function generateRotatingQRs(count) {
   rqrCodes = [];
   activeToken = null;
   localStorage.removeItem('vmis_active_token');
-  postCloud('saveActiveToken', null);
+  // No cloud clear here — activateToken(firstToken) below is the single source of
+  // truth for the cloud's activeToken. Firing a separate "clear" POST first created a
+  // race: on a real network the clear could land AFTER the activate, wiping it back to null.
   const grid = document.getElementById('rqrGrid');
   if (!grid) return;
   grid.innerHTML = '';
@@ -693,9 +695,17 @@ function renderAdminList() {
 // no more PIN. Login already proves who they are; the QR/token step
 // just confirms they're physically on-site before recording.
 // ═══════════════════════════════════════════════════════════════
+// Mobile Safari leaves the page scrolled after the on-screen keyboard closes, which can
+// push a position:fixed screen out of the visible area. Reset on every transition.
+function resetStaffViewport_() {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  window.scrollTo(0, 0);
+}
+
 function showStaffScreen(id) {
   document.querySelectorAll('#staffApp .screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
+  resetStaffViewport_();
 }
 
 function _initStaffApp() {
@@ -900,6 +910,7 @@ function showStaffSuccess(staff, entry, now) {
   document.querySelectorAll('#staffApp .screen').forEach(s => s.classList.remove('active'));
   const screen = document.getElementById('screen-ssuccess');
   screen.className = `screen active type-${isIn ? 'in' : 'out'}`;
+  resetStaffViewport_();
   document.getElementById('sSuccessIcon').textContent = isIn ? (entry.isLate ? '⚠️' : '🌅') : '🌆';
   document.getElementById('sSuccessTitle').textContent = isIn ? (entry.isLate ? 'Signed In — Late' : 'Signed In!') : 'Signed Out!';
   document.getElementById('sSuccessSub').textContent = isIn
