@@ -314,8 +314,10 @@ function generateRotatingQRs(count) {
   const grid = document.getElementById('rqrGrid');
   if (!grid) return;
   grid.innerHTML = '';
+  let firstToken = null;
   for (let i = 0; i < count; i++) {
     const token = 'RQR-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    if (i === 0) firstToken = token;
     const payload = JSON.stringify({ t: token, app: 'StaffTrack' });
     const card = document.createElement('div');
     card.className = 'rqr-card';
@@ -329,7 +331,10 @@ function generateRotatingQRs(count) {
     rqrCodes.push({ token, card, qrEl });
     setTimeout(() => makeQR(qrEl, payload, 100), 80 * i);
   }
-  showToast('success', '🔐', 'QR Set Generated', 'Click a QR code to make it active.');
+  // QR 1 is active immediately — otherwise none of the codes work until the admin
+  // remembers to click one, which reads to staff as "QR expired".
+  if (firstToken) activateToken(firstToken);
+  showToast('success', '🔐', 'QR Set Generated', 'QR 1 is active now. Click a different card to rotate to another code.');
 }
 
 function activateToken(token) {
