@@ -487,6 +487,30 @@ input::placeholder { color: #9CA3AF; }
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto;"><div id="lateTableWrap"></div></div>
     </div>
+    <div class="card" id="absentTodayCard" style="display:none;margin-bottom:20px;">
+      <div class="card-header" style="background:#FEF2F2;border-color:#FECACA;">
+        <div class="icon" style="background:#DC2626">🚫</div>
+        <span style="color:#991B1B;font-weight:700;">Absent Today</span>
+        <span id="absentTodayCountBadge" style="margin-left:8px;background:#DC2626;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;"></span>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto;"><div id="absentTodayWrap"></div></div>
+    </div>
+    <div class="card" id="lateMonthCard" style="display:none;margin-bottom:20px;">
+      <div class="card-header" style="background:#FFFBEB;border-color:#FCD34D;">
+        <div class="icon" style="background:#D97706">⚠️</div>
+        <span style="color:#92400E;font-weight:700;">Late This Month</span>
+        <span id="lateMonthCountBadge" style="margin-left:8px;background:#D97706;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;"></span>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto;"><div id="lateMonthWrap"></div></div>
+    </div>
+    <div class="card" id="absentMonthCard" style="display:none;margin-bottom:20px;">
+      <div class="card-header" style="background:#FEF2F2;border-color:#FECACA;">
+        <div class="icon" style="background:#DC2626">🚫</div>
+        <span style="color:#991B1B;font-weight:700;">Absent This Month</span>
+        <span id="absentMonthCountBadge" style="margin-left:8px;background:#DC2626;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;"></span>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto;"><div id="absentMonthWrap"></div></div>
+    </div>
     <div class="card">
       <div class="card-header">
         <div class="icon">📊</div> Today's Attendance <span class="live-badge"><span class="live-dot"></span> LIVE</span>
@@ -525,7 +549,7 @@ input::placeholder { color: #9CA3AF; }
         </div>
       </div>
     </div>
-    <div class="google-setup">
+    <div class="google-setup" style="display:none;">
       <h3>☁️ Cloud Sync (Google Sheets)</h3>
       <p>All staff, logs and settings sync through this Google Apps Script URL so every device (admin and staff) sees the same live data.</p>
       <div class="url-input-wrap">

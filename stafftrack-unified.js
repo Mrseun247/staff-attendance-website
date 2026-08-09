@@ -108,6 +108,20 @@ function fmtTime(d) { return d.toLocaleTimeString('en-NG', { hour: '2-digit', mi
 function fmtDate(d) { return d.toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
 function getShift() { return new Date().getHours() < 12 ? 'morning' : 'afternoon'; }
 
+// School (Mon–Fri) dates from the 1st of the current month through today — used to work out
+// "days absent this month" without counting weekends as missed days.
+function getSchoolDaysThisMonth_() {
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
+  const days = [];
+  for (let d = 1; d <= today; d++) {
+    const dt = new Date(year, month, d);
+    const dow = dt.getDay();
+    if (dow !== 0 && dow !== 6) days.push(getDateStr(dt));
+  }
+  return days;
+}
+
 function updateClock() {
   const now = new Date();
   const el = document.getElementById('clockDisplay');
@@ -454,6 +468,65 @@ function renderLogs() {
   if (lateWrap && lateLogs.length > 0) {
     lateWrap.innerHTML = '<table class="log-table"><thead><tr><th>Name</th><th>Department</th><th>Role</th><th>Time</th><th>Minutes Late</th></tr></thead><tbody>' +
       lateLogs.map(l => '<tr><td><strong>' + l.name + '</strong></td><td>' + (l.department || '') + '</td><td>' + (l.role || '') + '</td><td>' + l.time + '</td><td><span class="badge badge-late">' + (l.minutesLate || '?') + ' min late</span></td></tr>').join('') +
+      '</tbody></table>';
+  }
+
+  // ── Absent Today ──
+  const absentTodayCard = document.getElementById('absentTodayCard');
+  const absentTodayWrap = document.getElementById('absentTodayWrap');
+  const absentTodayBadge = document.getElementById('absentTodayCountBadge');
+  const absentTodayList = staffList.filter(s => !todayLogs.some(l => l.id === s.id));
+  if (absentTodayCard) absentTodayCard.style.display = absentTodayList.length > 0 ? 'block' : 'none';
+  if (absentTodayBadge) absentTodayBadge.textContent = absentTodayList.length + ' absent';
+  if (absentTodayWrap && absentTodayList.length > 0) {
+    absentTodayWrap.innerHTML = '<table class="log-table"><thead><tr><th>Staff ID</th><th>Name</th><th>Department</th><th>Role</th></tr></thead><tbody>' +
+      absentTodayList.map(s => '<tr><td><span class="badge badge-navy">' + s.id + '</span></td><td><strong>' + s.name + '</strong></td><td>' + (s.dept || '') + '</td><td>' + (s.role || '') + '</td></tr>').join('') +
+      '</tbody></table>';
+  }
+
+  // ── Late This Month / Absent This Month (per staff summary) ──
+  const monthPrefix = today.slice(0, 7); // "YYYY-MM"
+  const monthLogs = logs.filter(l => (l.date || '').slice(0, 7) === monthPrefix);
+  const schoolDaysThisMonth = getSchoolDaysThisMonth_();
+
+  const lateByStaff = {};
+  monthLogs.filter(l => l.status === 'IN' && l.isLate).forEach(l => {
+    if (!lateByStaff[l.id]) lateByStaff[l.id] = { staff: l, count: 0, dates: [] };
+    lateByStaff[l.id].count++;
+    lateByStaff[l.id].dates.push(l.date);
+  });
+  const lateMonthRows = Object.values(lateByStaff).sort((a, b) => b.count - a.count);
+
+  const lateMonthCard = document.getElementById('lateMonthCard');
+  const lateMonthWrap = document.getElementById('lateMonthWrap');
+  const lateMonthBadge = document.getElementById('lateMonthCountBadge');
+  if (lateMonthCard) lateMonthCard.style.display = lateMonthRows.length > 0 ? 'block' : 'none';
+  if (lateMonthBadge) lateMonthBadge.textContent = lateMonthRows.length + ' staff';
+  if (lateMonthWrap && lateMonthRows.length > 0) {
+    lateMonthWrap.innerHTML = '<table class="log-table"><thead><tr><th>Name</th><th>Department</th><th>Role</th><th>Times Late</th><th>Dates</th></tr></thead><tbody>' +
+      lateMonthRows.map(r => '<tr><td><strong>' + r.staff.name + '</strong></td><td>' + (r.staff.department || '') + '</td><td>' + (r.staff.role || '') + '</td><td><span class="badge badge-late">' + r.count + '×</span></td><td style="white-space:normal;font-size:12px;color:var(--gray)">' + r.dates.join(', ') + '</td></tr>').join('') +
+      '</tbody></table>';
+  }
+
+  const presentDatesByStaff = {};
+  monthLogs.filter(l => l.status === 'IN').forEach(l => {
+    if (!presentDatesByStaff[l.id]) presentDatesByStaff[l.id] = new Set();
+    presentDatesByStaff[l.id].add(l.date);
+  });
+  const absentMonthRows = staffList.map(s => {
+    const present = presentDatesByStaff[s.id] || new Set();
+    const missedDates = schoolDaysThisMonth.filter(d => !present.has(d));
+    return { staff: s, count: missedDates.length, dates: missedDates };
+  }).filter(r => r.count > 0).sort((a, b) => b.count - a.count);
+
+  const absentMonthCard = document.getElementById('absentMonthCard');
+  const absentMonthWrap = document.getElementById('absentMonthWrap');
+  const absentMonthBadge = document.getElementById('absentMonthCountBadge');
+  if (absentMonthCard) absentMonthCard.style.display = absentMonthRows.length > 0 ? 'block' : 'none';
+  if (absentMonthBadge) absentMonthBadge.textContent = absentMonthRows.length + ' staff';
+  if (absentMonthWrap && absentMonthRows.length > 0) {
+    absentMonthWrap.innerHTML = '<table class="log-table"><thead><tr><th>Staff ID</th><th>Name</th><th>Department</th><th>Role</th><th>Days Absent</th><th>Dates</th></tr></thead><tbody>' +
+      absentMonthRows.map(r => '<tr><td><span class="badge badge-navy">' + r.staff.id + '</span></td><td><strong>' + r.staff.name + '</strong></td><td>' + (r.staff.dept || '') + '</td><td>' + (r.staff.role || '') + '</td><td><span class="badge" style="background:var(--red-bg);color:var(--red)">' + r.count + '</span></td><td style="white-space:normal;font-size:12px;color:var(--gray)">' + r.dates.join(', ') + '</td></tr>').join('') +
       '</tbody></table>';
   }
 
