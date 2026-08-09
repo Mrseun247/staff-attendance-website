@@ -892,6 +892,7 @@ function recordAttendance(staff) {
 let staffAutoReturnTimer = null;
 function showStaffSuccess(staff, entry, now) {
   const isIn = entry.status === 'IN';
+  document.querySelectorAll('#staffApp .screen').forEach(s => s.classList.remove('active'));
   const screen = document.getElementById('screen-ssuccess');
   screen.className = `screen active type-${isIn ? 'in' : 'out'}`;
   document.getElementById('sSuccessIcon').textContent = isIn ? (entry.isLate ? '⚠️' : '🌅') : '🌆';
