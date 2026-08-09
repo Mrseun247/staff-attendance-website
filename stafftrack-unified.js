@@ -819,9 +819,9 @@ function renderStaffHome() {
 
   const inEl = document.getElementById('shomeInStatus');
   const outEl = document.getElementById('shomeOutStatus');
-  inEl.textContent = inLog ? inLog.time : 'Not yet';
+  inEl.textContent = inLog ? '✅ Yes — ' + inLog.time : 'Not yet';
   inEl.className = 'val ' + (inLog ? 'done' : 'pending');
-  outEl.textContent = outLog ? outLog.time : 'Not yet';
+  outEl.textContent = outLog ? '✅ Yes — ' + outLog.time : 'Not yet';
   outEl.className = 'val ' + (outLog ? 'done' : 'pending');
 
   const btn = document.getElementById('btnStaffAction');
