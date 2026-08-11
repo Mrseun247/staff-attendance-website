@@ -87,6 +87,12 @@ nav {
 .nav-tab:hover { background: rgba(255,255,255,0.08); color: var(--white); }
 .nav-tab.active { background: var(--gold); color: var(--navy); font-weight: 700; }
 .nav-right { color: rgba(255,255,255,0.5); font-size: 12px; display: flex; align-items: center; gap: 10px; }
+.nav-menu { display: contents; }
+.nav-hamburger {
+  display: none; background: rgba(255,255,255,0.1); border: none; color: var(--white);
+  font-size: 20px; width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+  align-items: center; justify-content: center; flex-shrink: 0;
+}
 
 .page { display: none; }
 .page.active { display: block; }
@@ -210,7 +216,6 @@ input::placeholder { color: #9CA3AF; }
 
 @media (max-width: 640px) {
   .form-row, .config-grid { grid-template-columns: 1fr; }
-  .nav-tabs { gap: 0; } .nav-tab { padding: 6px 7px; font-size: 11px; }
   .setup-body, .logs-body, .admin-body { padding: 16px 12px; }
   .card-header { font-size: 12px; padding: 12px 14px; gap: 8px; }
   .card-body { padding: 14px; }
@@ -222,7 +227,22 @@ input::placeholder { color: #9CA3AF; }
   .staff-table th, .staff-table td { padding: 8px 10px; font-size: 12px; }
   .btn { font-size: 12px; padding: 10px 14px; } .btn-sm { font-size: 11px; padding: 6px 10px; }
   .setup-header h1 { font-size: 22px; } .setup-header p { font-size: 13px; }
-  nav { padding: 0 12px; height: 56px; } .nav-brand span { font-size: 15px; } .nav-right { display: none; }
+  nav { padding: 0 12px; height: 56px; position: relative; } .nav-brand span { font-size: 15px; }
+  .nav-hamburger { display: flex; }
+  .nav-menu { display: none; }
+  .nav-menu.open {
+    display: flex; flex-direction: column; gap: 10px;
+    position: absolute; top: 56px; left: 0; right: 0;
+    background: var(--navy); padding: 10px 12px 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35); z-index: 99;
+  }
+  .nav-menu.open .nav-tabs { flex-direction: column; gap: 4px; }
+  .nav-menu.open .nav-tab { text-align: left; padding: 12px 14px; font-size: 13px; }
+  .nav-menu.open .nav-right {
+    flex-direction: column; align-items: stretch; gap: 8px;
+    border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;
+  }
+  .nav-menu.open .nav-right button { width: 100%; padding: 10px; font-size: 13px; }
   .rqr-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
@@ -370,17 +390,20 @@ input::placeholder { color: #9CA3AF; }
 
 <nav>
   <div class="nav-brand"><div class="dot"></div>StaffTrack</div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('setup')">⚙️ Setup</button>
-    <button class="nav-tab" onclick="showPage('logs')">📋 Records</button>
-    <button class="nav-tab" onclick="showPage('security')">🔐 Security</button>
-    <button class="nav-tab" onclick="showPage('admin')">🔧 Admin</button>
-    <button class="nav-tab" id="superAdminTab" style="display:none" onclick="showPage('superadmin')">👑 Super Admin</button>
-  </div>
-  <div class="nav-right">
-    <span id="clockDisplay"></span>
-    <span id="loggedInAs" style="color:rgba(255,255,255,0.5);font-size:11px;"></span>
-    <button onclick="doLogout()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;">Sign Out</button>
+  <button class="nav-hamburger" id="navHamburger" onclick="toggleNavMenu()" aria-label="Menu">☰</button>
+  <div class="nav-menu" id="navMenu">
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('setup')">⚙️ Setup</button>
+      <button class="nav-tab" onclick="showPage('logs')">📋 Records</button>
+      <button class="nav-tab" onclick="showPage('security')">🔐 Security</button>
+      <button class="nav-tab" onclick="showPage('admin')">🔧 Admin</button>
+      <button class="nav-tab" id="superAdminTab" style="display:none" onclick="showPage('superadmin')">👑 Super Admin</button>
+    </div>
+    <div class="nav-right">
+      <span id="clockDisplay"></span>
+      <span id="loggedInAs" style="color:rgba(255,255,255,0.5);font-size:11px;"></span>
+      <button onclick="doLogout()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;">Sign Out</button>
+    </div>
   </div>
 </nav>
 
@@ -511,6 +534,37 @@ input::placeholder { color: #9CA3AF; }
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto;"><div id="absentMonthWrap"></div></div>
     </div>
+
+    <div class="card">
+      <div class="card-header"><div class="icon">🌴</div> Staff Leave / Permission</div>
+      <div class="card-body">
+        <p style="color:var(--gray);font-size:13px;margin-bottom:16px;">Grant a staff member approved leave for a specific day — sick, travelling, or other reason — so that day won't count as absent for them.</p>
+        <div class="form-row">
+          <div><label>Staff</label><select id="leaveStaffId"><option value="">Select staff</option></select></div>
+          <div><label>Date</label><input type="date" id="leaveDate"/></div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Reason</label>
+            <select id="leaveReason">
+              <option value="Sick">🤒 Sick</option>
+              <option value="Travelling">✈️ Travelling</option>
+              <option value="Other">📝 Other</option>
+            </select>
+          </div>
+          <div><label>Note (optional)</label><input type="text" id="leaveNote" placeholder="e.g. Doctor's appointment"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="grantLeave()">✅ Grant Leave</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        <div class="icon">📋</div> Leave Records
+        <span id="leaveCountBadge" style="margin-left:8px;background:var(--navy);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;"></span>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto;"><div id="leaveListWrap"></div></div>
+    </div>
+
     <div class="card">
       <div class="card-header">
         <div class="icon">📊</div> Today's Attendance <span class="live-badge"><span class="live-dot"></span> LIVE</span>

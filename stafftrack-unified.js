@@ -30,6 +30,7 @@ let scriptUrl  = localStorage.getItem('vmis_script_url')        || 'https://scri
 if (!localStorage.getItem('vmis_script_url')) localStorage.setItem('vmis_script_url', scriptUrl);
 let schoolInfo = JSON.parse(localStorage.getItem('vmis_school') || '{"name":"","branch":"","session":"2025/2026"}');
 let attRules   = JSON.parse(localStorage.getItem('vmis_rules')  || '{"resumption":"07:30","closing":"15:00","late":15}');
+let leaveList  = JSON.parse(localStorage.getItem('vmis_leave')  || '[]');
 
 function freshLogs() { return JSON.parse(localStorage.getItem('vmis_logs') || '[]'); }
 
@@ -66,10 +67,12 @@ function loadCloudData() {
           if (data.logs)   logs       = data.logs;
           if (data.school) schoolInfo = data.school;
           if (data.rules)  attRules   = data.rules;
+          if (data.leave)  leaveList  = data.leave;
           localStorage.setItem('vmis_staff',  JSON.stringify(staffList));
           localStorage.setItem('vmis_logs',   JSON.stringify(logs));
           localStorage.setItem('vmis_school', JSON.stringify(schoolInfo));
           localStorage.setItem('vmis_rules',  JSON.stringify(attRules));
+          localStorage.setItem('vmis_leave',  JSON.stringify(leaveList));
           if (data.admins) localStorage.setItem('vmis_admins', JSON.stringify(data.admins));
           if (data.activeToken) localStorage.setItem('vmis_active_token', JSON.stringify(data.activeToken));
           resolve(true);
@@ -195,6 +198,7 @@ function doLogout() {
   currentAdmin = null;
   currentStaff = null;
   stopStaffCamera();
+  closeNavMenu();
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('adminApp').classList.remove('active');
   document.getElementById('staffApp').classList.remove('active');
@@ -215,8 +219,25 @@ function showPage(id) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   event.target.classList.add('active');
+  closeNavMenu();
   refreshCloudAndRender();
 }
+
+function toggleNavMenu() {
+  const menu = document.getElementById('navMenu');
+  if (menu) menu.classList.toggle('open');
+}
+function closeNavMenu() {
+  const menu = document.getElementById('navMenu');
+  if (menu) menu.classList.remove('open');
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('navMenu');
+  const hamburger = document.getElementById('navHamburger');
+  if (!menu || !menu.classList.contains('open')) return;
+  if (menu.contains(e.target) || (hamburger && hamburger.contains(e.target))) return;
+  closeNavMenu();
+});
 
 function _initAdminApp() {
   logs = freshLogs();
@@ -430,6 +451,12 @@ function printActiveQR() {
   win.addEventListener('load', () => win.print());
 }
 
+// Approved leave (sick / travelling / other) excuses a specific staff+date pair from
+// ever counting as absent — used by today's absent list, the monthly summary, and export.
+function isOnLeave_(staffId, dateStr) {
+  return leaveList.some(l => l.id === staffId && l.date === dateStr);
+}
+
 // Per-staff late/absent summary for the current month so far. Shared by the Records
 // page cards and the CSV export, so both always agree on the same numbers.
 function getMonthlyAttendanceSummary_() {
@@ -451,7 +478,7 @@ function getMonthlyAttendanceSummary_() {
   });
   const absentMonthRows = staffList.map(s => {
     const present = presentDatesByStaff[s.id] || new Set();
-    const missedDates = schoolDaysThisMonth.filter(d => !present.has(d));
+    const missedDates = schoolDaysThisMonth.filter(d => !present.has(d) && !isOnLeave_(s.id, d));
     return { staff: s, count: missedDates.length, dates: missedDates };
   }).filter(r => r.count > 0).sort((a, b) => b.count - a.count);
 
@@ -476,7 +503,7 @@ function renderLogs() {
   const outCount = todayLogs.filter(l => l.status === 'OUT').length;
   const lateCount = todayLogs.filter(l => l.status === 'IN' && l.isLate).length;
   const fullDone = staffList.filter(s => todayLogs.some(l => l.id === s.id && l.status === 'IN') && todayLogs.some(l => l.id === s.id && l.status === 'OUT')).length;
-  const absent = staffList.filter(s => !todayLogs.some(l => l.id === s.id)).length;
+  const absent = staffList.filter(s => !todayLogs.some(l => l.id === s.id) && !isOnLeave_(s.id, today)).length;
 
   const statsRow = document.getElementById('statsRow');
   if (statsRow) statsRow.innerHTML =
@@ -503,7 +530,7 @@ function renderLogs() {
   const absentTodayCard = document.getElementById('absentTodayCard');
   const absentTodayWrap = document.getElementById('absentTodayWrap');
   const absentTodayBadge = document.getElementById('absentTodayCountBadge');
-  const absentTodayList = staffList.filter(s => !todayLogs.some(l => l.id === s.id));
+  const absentTodayList = staffList.filter(s => !todayLogs.some(l => l.id === s.id) && !isOnLeave_(s.id, today));
   if (absentTodayCard) absentTodayCard.style.display = absentTodayList.length > 0 ? 'block' : 'none';
   if (absentTodayBadge) absentTodayBadge.textContent = absentTodayList.length + ' absent';
   if (absentTodayWrap && absentTodayList.length > 0) {
@@ -537,6 +564,8 @@ function renderLogs() {
       '</tbody></table>';
   }
 
+  renderLeaveList();
+
   const wrap = document.getElementById('logsTableWrap');
   if (!wrap) return;
   if (filtered.length === 0) { wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><h3>No records found</h3><p>Adjust filters, or wait for staff to sign in.</p></div>'; return; }
@@ -553,6 +582,68 @@ function renderLogs() {
         '<td><span class="status-dot ' + (l.status === 'IN' ? 'in' : 'out') + '"></span><span class="badge ' + (l.status === 'IN' ? 'badge-green' : 'badge-gold') + '">' + (l.status === 'IN' ? 'Sign-In' : 'Sign-Out') + '</span></td>' +
       '</tr>';
     }).join('') + '</tbody></table>';
+}
+
+// ── Staff Leave / Permission (excuses a specific day from counting as absent) ──
+function saveLeaveList() { localStorage.setItem('vmis_leave', JSON.stringify(leaveList)); postCloud('saveLeave', leaveList); }
+
+function grantLeave() {
+  const staffId = document.getElementById('leaveStaffId').value;
+  const date = document.getElementById('leaveDate').value;
+  const reason = document.getElementById('leaveReason').value;
+  const note = document.getElementById('leaveNote').value.trim();
+  if (!staffId || !date) { showToast('error', '⚠️', 'Missing Fields', 'Select a staff member and a date.'); return; }
+  const staff = staffList.find(s => s.id === staffId);
+  if (!staff) return;
+  if (isOnLeave_(staffId, date)) { showToast('error', '⚠️', 'Already Granted', staff.name + ' already has leave recorded for that date.'); return; }
+  leaveList.push({
+    entryId: 'LV-' + Date.now().toString(36).toUpperCase(),
+    id: staffId, name: staff.name, dept: staff.dept || '', role: staff.role || '',
+    date, reason, note,
+    grantedBy: currentAdmin ? currentAdmin.name : 'Admin', grantedAt: new Date().toISOString()
+  });
+  saveLeaveList();
+  document.getElementById('leaveDate').value = '';
+  document.getElementById('leaveNote').value = '';
+  renderLeaveList();
+  renderLogs();
+  showToast('success', '✅', 'Leave Granted', staff.name + ' will not be marked absent on ' + date + '.');
+}
+
+function revokeLeave(entryId) {
+  if (!confirm('Revoke this leave entry? The day will count as absent again unless a sign-in exists.')) return;
+  leaveList = leaveList.filter(l => l.entryId !== entryId);
+  saveLeaveList();
+  renderLeaveList();
+  renderLogs();
+}
+
+function renderLeaveList() {
+  const sel = document.getElementById('leaveStaffId');
+  if (sel) {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select staff</option>' + staffList.map(s => '<option value="' + s.id + '">' + s.name + ' (' + s.id + ')</option>').join('');
+    sel.value = current;
+  }
+  const badge = document.getElementById('leaveCountBadge');
+  if (badge) badge.textContent = leaveList.length + ' record' + (leaveList.length === 1 ? '' : 's');
+  const wrap = document.getElementById('leaveListWrap');
+  if (!wrap) return;
+  if (leaveList.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">🌴</div><h3>No leave records</h3><p>Grant leave above so a day off doesn\'t count as absent.</p></div>';
+    return;
+  }
+  const reasonIcon = { Sick: '🤒', Travelling: '✈️', Other: '📝' };
+  const sorted = [...leaveList].sort((a, b) => b.date.localeCompare(a.date));
+  wrap.innerHTML = '<table class="log-table"><thead><tr><th>Staff</th><th>Date</th><th>Reason</th><th>Note</th><th>Granted By</th><th>Action</th></tr></thead><tbody>' +
+    sorted.map(l => '<tr>' +
+      '<td><strong>' + l.name + '</strong><br><span class="badge badge-navy" style="margin-top:4px">' + l.id + '</span></td>' +
+      '<td>' + l.date + '</td>' +
+      '<td>' + (reasonIcon[l.reason] || '📝') + ' ' + l.reason + '</td>' +
+      '<td>' + (l.note || '—') + '</td>' +
+      '<td>' + (l.grantedBy || '') + '</td>' +
+      '<td><button class="btn btn-ghost btn-sm" onclick="revokeLeave(\'' + l.entryId + '\')">✕ Revoke</button></td>' +
+    '</tr>').join('') + '</tbody></table>';
 }
 
 function clearTodayLogs() {
